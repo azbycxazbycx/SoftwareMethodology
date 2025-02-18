@@ -30,5 +30,6 @@ public class Chess {
 	 */
 	public static void start() {
 		/* FILL IN THIS METHOD */
+		System.out.println("Testing method - Should show up in terminal");
 	}
 }
