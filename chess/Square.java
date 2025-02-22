@@ -1,5 +1,7 @@
 package chess;
 
+import chess.ReturnPiece.PieceFile;
+
 public class Square {
     int rank;
     int file;
@@ -25,5 +27,33 @@ public class Square {
 
     public void takePiece() {
         this.piece = null;
+    }
+
+    public PieceFile getFile() {
+        if (this.file == 1) {
+            return PieceFile.a;
+        }
+        else if (this.file == 2) {
+            return PieceFile.b;
+        }
+        else if (this.file == 3) {
+            return PieceFile.c;
+        }
+        else if (this.file == 4) {
+            return PieceFile.d;
+        }
+        else if (this.file == 5) {
+            return PieceFile.e;
+        }
+        else if (this.file == 6) {
+            return PieceFile.f;
+        }
+        else if (this.file == 7) {
+            return PieceFile.g;
+        }
+        else {
+            return PieceFile.h;
+        }
+
     }
 }
