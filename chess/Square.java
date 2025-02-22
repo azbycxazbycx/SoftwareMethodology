@@ -23,7 +23,7 @@ public class Square {
         this.piece = piece;
     }
 
-    public void takePiece(Piece piece) {
+    public void takePiece() {
         this.piece = null;
     }
 }
