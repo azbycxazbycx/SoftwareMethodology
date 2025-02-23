@@ -25,23 +25,6 @@ public class Piece{
         this.color = color;
     }
 
-  /** 
-  public int getRank() {
-        return this.rank;
-    }
-
-  public void setRank(int rank) {
-        this.rank = rank;
-    }
-
-  public int getFile() {
-        return this.file;
-    }
-
-  public void setFile(int file) {
-        this.file = file;
-    }
-**/
 
   public TypeOfPiece getType() {
         return this.type;
