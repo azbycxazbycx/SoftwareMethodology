@@ -6,15 +6,11 @@ public class Piece{
 
   PieceColor color; 
   TypeOfPiece type;
-  //int rank; 
-  //int file; 
 
   // Constructor
   public Piece(PieceColor color, TypeOfPiece type){
     this.color = color; 
     this.type = type;
-    //this.rank = rank; 
-    //this.file = file; 
   }
 
   public PieceColor getColor() {
