@@ -1,6 +1,7 @@
 package chess;
 
 import chess.ReturnPiece.PieceFile;
+import chess.ReturnPiece.PieceType;
 
 public class Square {
     int rank;
@@ -55,6 +56,17 @@ public class Square {
             return PieceFile.h;
         }
 
+    }
+
+    public ReturnPiece toReturnPiece() {
+        if (this.piece == null) {
+            return null;
+        }
+        ReturnPiece newReturnPiece = new ReturnPiece();
+        newReturnPiece.pieceFile = getFile();
+        newReturnPiece.pieceRank = this.rank;
+        newReturnPiece.pieceType = this.piece.toPieceType();
+        return newReturnPiece;
     }
 
     public String toString() {

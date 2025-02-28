@@ -1,4 +1,7 @@
-package chess; 
+package chess;
+
+import chess.ReturnPiece.PieceType;
+import chess.ReturnPiece.PieceType;
 
 public class Piece{
   enum PieceColor {WHITE, BLACK, BLANK}
@@ -33,6 +36,46 @@ public class Piece{
   public void setBlank() {
     this.color = PieceColor.BLANK; 
     this.type = TypeOfPiece.None;
+  }
+
+  public PieceType toPieceType() {
+    if (this.color == PieceColor.WHITE) {
+      switch(this.type) {
+        case P:
+          return PieceType.WP;
+        case N:
+          return PieceType.WN;
+        case B:
+          return PieceType.WB;
+        case R:
+          return PieceType.WR;
+        case Q:
+          return PieceType.WQ;
+        case K:
+          return PieceType.WK;
+        default:
+          return null;
+      }
+    }
+    else if (this.color == PieceColor.BLACK) {
+      switch(this.type) {
+        case P:
+          return PieceType.BP;
+        case N:
+          return PieceType.BN;
+        case B:
+          return PieceType.BB;
+        case R:
+          return PieceType.BR;
+        case Q:
+          return PieceType.BQ;
+        case K:
+          return PieceType.BK;
+        default:
+          return null;
+      }
+    }
+    return null;
   }
 
   public String toString() {

@@ -10,6 +10,7 @@ public class Board{
     boolean isWhiteTurn;
     int turnNum;
     Piece canEnPassant = null;
+    Message currMessage = null;
 
     // Constructor
     public Board(){
@@ -119,7 +120,19 @@ public class Board{
 
     //It seems like they ultimately want us to return an arraylist from the returnplay class, so this'll convert the board
     public ArrayList<ReturnPiece> printPosition() {
-        return null;
+        ArrayList<ReturnPiece> boardArrayList = new ArrayList<>();
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                if (grid[rank][file].getPiece() != null) {
+                    boardArrayList.add(grid[rank][file].toReturnPiece());
+                }
+            }
+        }
+        return boardArrayList;
+    }
+
+    public Message getMessage() {
+        return this.currMessage;
     }
 
   

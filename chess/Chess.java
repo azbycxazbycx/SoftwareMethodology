@@ -33,5 +33,12 @@ public class Chess {
 			/* FILL IN THIS METHOD */
 			chessboard = new Board();
 			System.out.println("Testing method - Should show up in terminal");
+			
+		}
+
+		//Test method to test printing board
+		public static ArrayList<ReturnPiece> getArrayListTest() {
+
+			return chessboard.printPosition();
 		}
 }
