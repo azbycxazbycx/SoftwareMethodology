@@ -14,17 +14,17 @@ public class Piece{
   }
 
   public PieceColor getColor() {
-        return this.color;
-    }
+    return this.color;
+  }
 
   public void setColor(PieceColor color) {
-        this.color = color;
-    }
+    this.color = color;
+  }
 
 
   public TypeOfPiece getType() {
-        return this.type;
-    }
+    return this.type;
+  }
 
   public void setType(TypeOfPiece type) {
     this.type = type;
@@ -35,11 +35,30 @@ public class Piece{
     this.type = TypeOfPiece.None;
   }
 
-  // check if the piece can actually moved to (nRow, nCol)
-  // I think we need another class for the rule/move logic
-  public boolean isValid(int nRank, int nFile){
-    /***TO BE COMPLETED***/
-    return true; //Added just to avoid error
+  public String toString() {
+    String color = "Blank";
+    if (this.color == PieceColor.WHITE) {
+      color = "White";
+    }
+    else if (this.color == PieceColor.BLACK) {
+      color = "Black";
+    }
+    switch(this.type) {
+      case P:
+        return color + "pawn";
+      case N:
+        return color + "knight";
+      case B:
+        return color + "bishop";
+      case R:
+        return color + "rook";
+      case Q:
+        return color + "queen";
+      case K:
+        return color + "king";
+      default:
+        return "Nothing";
+    }
   }
   
 }

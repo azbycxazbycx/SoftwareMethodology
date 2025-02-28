@@ -56,4 +56,11 @@ public class Square {
         }
 
     }
+
+    public String toString() {
+        if (piece == null) {
+            return "Empty square at rank " + rank + " file " + file;
+        }
+        return piece.toString() + " on square at rank " + rank + " file " + file;
+    }
 }

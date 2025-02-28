@@ -9,6 +9,7 @@ public class Board{
     Square[][] grid;
     boolean isWhiteTurn;
     int turnNum;
+    Piece canEnPassant = null;
 
     // Constructor
     public Board(){
@@ -76,29 +77,25 @@ public class Board{
     //I'm not sure how we are going to figure out all the steps when we move a piece 
     //but here's a basic starting point
     public void movePiece(int startRank, int startFile, int endRank, int endFile) {
-        if (startRank < 1 || startRank > 8 || endRank < 1 || endFile > 8) {
-            System.out.println("Error: invalid move coordinates");
+        if (!isValidMove(startRank, startFile, endRank, endFile)) {
+            System.out.println("Not a valid move");
+            return;
         }
-        else if (grid[startRank - 1][startFile - 1].getPiece() == null) {
-            System.out.println("Error: No piece detected on rank " + startRank + " file " + startFile);
-        }
-        //This doesn't diffrerentiate between white or black pieces so this function won't work
-        //If you want to capture an enemy piece at the moment
-        else if (grid[endRank - 1][endFile - 1].getPiece() != null) {
-            System.out.println("Error: cannot move to already occupied square");
-        }
-        else if (grid[startRank - 1][startFile - 1].getPiece().getColor() == PieceColor.WHITE && !isWhiteTurn) {
-            System.out.println("Error: can't move white piece on black's turn");
-        }
-        else if (grid[startRank - 1][startFile - 1].getPiece().getColor() == PieceColor.BLACK && isWhiteTurn) {
-            System.out.println("Error: can't move black piece on white's turn");
-        }
-        else {
-            grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
-
-            grid[startRank - 1][startFile - 1].takePiece();
         
+        //Piece that was on square, just in case we need to walk back the move
+        Piece takenPiece = grid[endRank - 1][endFile - 1].getPiece();
+
+        grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
+        grid[startRank - 1][startFile - 1].takePiece();
+            
+        //After making the move, if your king is in check then move is reversed
+        if (isKingInCheck()) {
+            System.out.println("King is in check, not a valid move");
+            grid[startRank-1][startFile-1].placePiece(grid[endRank - 1][endFile - 1].getPiece());
+            grid[endRank-1][endFile-1].placePiece(takenPiece);
+            return;
         }
+    
         if (isWhiteTurn) {
             isWhiteTurn = false;
         }
@@ -167,7 +164,7 @@ public class Board{
 
         switch (piece.getType()) {
             case P: // Pawn
-                int direction = (piece.getColor() == Piece.PieceColor.WHITE) ? 1 : -1;
+                int direction = (piece.getColor() == PieceColor.WHITE) ? 1 : -1;
                 if (startSquare.file == endSquare.file) {
                     // Move forward
                     if (rankDiff == (1 * direction)) {
@@ -221,6 +218,284 @@ public class Board{
             currentFile += fileStep;
         }
 
+        return false;
+    }
+
+    //Called after moving piece, but before turn order is changed
+    private boolean isKingInCheck() {
+        PieceColor colorOfKing;
+        PieceColor enemyColor;
+        if (isWhiteTurn) {
+            colorOfKing = PieceColor.WHITE;
+            enemyColor = PieceColor.BLACK;
+        }
+        else {
+            colorOfKing = PieceColor.BLACK;
+            enemyColor = PieceColor.WHITE;
+        }
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                Piece pieceOnCurrSquare = grid[rank][file].getPiece();
+                if (pieceOnCurrSquare != null) {
+                    if (pieceOnCurrSquare.getColor() == enemyColor) {
+                        System.out.println(grid[rank][file]);
+                        switch(pieceOnCurrSquare.getType()) {
+                            case P:
+                                if (pawnCheck(rank, file, colorOfKing, enemyColor)) return true;
+                            case N:
+                                if (knightCheck(rank, file, colorOfKing, enemyColor)) return true;
+                            case B:
+                                if (bishopCheck(rank, file, colorOfKing, enemyColor)) return true;
+                            case R:
+                                if (rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                            case Q:
+                                if (bishopCheck(rank, file, colorOfKing, enemyColor) || rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                            default:
+                                System.out.println("Error: piece with no type");
+                                continue;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean pawnCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
+        int direction = (enemyColor == PieceColor.WHITE) ? 1 : -1;
+        if (file - 1 >= 0) {
+            Piece targetPiece = grid[rank + direction][file-1].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[rank + direction][file-1]);
+                    return true;
+                }
+            }
+        }
+        if (file + 1 < 8) {
+            Piece targetPiece = grid[rank + direction][file+1].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[rank + direction][file-1]);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean knightCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
+        if (file - 2 >= 0) {
+            if (rank - 1 >= 0) {
+                Piece targetPiece = grid[rank-1][file-2].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank-1][file-2]);
+                        return true;
+                    }
+                }
+            }
+            if (rank + 1 < 8) {
+                Piece targetPiece = grid[rank+1][file-2].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank+1][file-2]);
+                        return true;
+                    }
+                }
+
+            }
+        }
+        if (file + 2 < 8) {
+            if (rank - 1 >= 0) {
+                Piece targetPiece = grid[rank-1][file+2].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank-1][file+2]);
+                        return true;
+                    }
+                }
+            }
+            if (rank + 1 < 8) {
+                Piece targetPiece = grid[rank+1][file+2].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank+1][file+2]);
+                        return true;
+                    }
+                }
+            }
+        }
+        if (rank - 2 >= 0) {
+            if (file - 1 >= 0) {
+                Piece targetPiece = grid[rank-2][file-1].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank-2][file-1]);
+                        return true;
+                    }
+                }
+            }
+            if (file + 1 < 8) {
+                Piece targetPiece = grid[rank-2][file+1].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank-2][file+1]);
+                        return true;
+                    }
+                }
+            }
+        }
+        if (rank + 2 < 8) {
+            if (file - 1 >= 0) {
+                Piece targetPiece = grid[rank+2][file-1].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank+2][file-1]);
+                        return true;
+                    }
+                }
+            }
+            if (file + 1 < 8) {
+                Piece targetPiece = grid[rank+2][file+1].getPiece();
+                if (targetPiece != null) {
+                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                        System.out.println(grid[rank+2][file+1]);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean bishopCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
+        int currRank = rank + 1;
+        int currFile = file + 1;
+        while (currRank < 8 && currFile < 8) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                break;
+                }
+            }
+            currRank++;
+            currFile++;
+        }
+
+        currRank = rank + 1;
+        currFile = file - 1;
+        while (currRank < 8 && currFile >= 0) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currRank++;
+            currFile--;
+        }
+
+        currRank = rank - 1;
+        currFile = file + 1;
+        while (currRank >= 0 && currFile < 8) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currRank--;
+            currFile++;
+        }
+
+        currRank = rank - 1;
+        currFile = file - 1;
+        while (currRank >= 0 && currFile >= 0) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currRank--;
+            currFile--;
+        }
+        return false;
+    }
+
+    private boolean rookCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
+        int currRank = rank + 1;
+        int currFile = file;
+        while (currRank < 8) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                break;
+                }
+            }
+            currRank++;
+        }
+
+        currRank = rank - 1;
+        currFile = file;
+        while (currRank >= 0) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currRank--;
+        }
+
+        currRank = rank;
+        currFile = file + 1;
+        while (currFile < 8) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currFile++;
+        }
+
+        currRank = rank;
+        currFile = file - 1;
+        while (currFile >= 0) {
+            Piece targetPiece = grid[currRank][currFile].getPiece();
+            if (targetPiece != null) {
+                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
+                    System.out.println(grid[currRank][currFile]);
+                    return true;
+                }else {
+                    break;
+                }
+            }
+            currFile--;
+        }
         return false;
     }
 }
