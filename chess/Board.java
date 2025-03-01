@@ -110,6 +110,11 @@ public class Board{
             isWhiteTurn = true;
             turnNum++;
         }
+
+        // Update the last move
+        this.lastMove = String.format("%c%d %c%d", 
+        (char) ('a' + startFile - 1), startRank, 
+        (char) ('a' + endFile - 1), endRank);
     } 
 
     //Will check if current position requires a message like "check"
