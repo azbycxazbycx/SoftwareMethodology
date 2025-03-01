@@ -11,17 +11,48 @@ public class Board{
     int turnNum;
     Piece canEnPassant = null;
     Message currMessage = null;
+    Square enPassantSquare; // Current en passant square
+    Square tempEnPassantSquare; // Temporary en passant square for validation
+
 
     // for tracking last move
     private String lastMove;
     
     // Constructor
-    public Board(){
+    public Board() {
         this.grid = new Square[8][8];
-        initializeBoard();
         this.isWhiteTurn = true;
         this.turnNum = 1;
+        this.enPassantSquare = null;
+        this.tempEnPassantSquare = null;
+        initializeBoard();
     }
+
+    /* en passant field part*/
+    
+    // Reset the en passant square at the start of each turn
+    public void resetEnPassantSquare() {
+        this.enPassantSquare = null;
+    }
+
+    // Getter and setter for enPassantSquare
+    public Square getEnPassantSquare() {
+        return this.enPassantSquare;
+    }
+
+    public void setEnPassantSquare(Square square) {
+        this.enPassantSquare = square;
+    }
+
+    // for tempEnPassantSquare
+    public Square getTempEnPassantSquare() {
+        return this.tempEnPassantSquare;
+    }
+
+    public void setTempEnPassantSquare(Square square) {
+        this.tempEnPassantSquare = square;
+    }
+}
 
     private void initializeBoard() {
         this.grid[0] = new Square[] {
