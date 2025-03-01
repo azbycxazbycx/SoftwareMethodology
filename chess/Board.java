@@ -121,8 +121,32 @@ public class Board{
             return;
         }
         System.out.println("AAAAA");
+
+    // ============================================
+    // CASTLING CHECK
+    // ============================================
+    Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
+
+    // Check if the move is a castling move (king moves two squares horizontally)
+    if (movingPiece != null && movingPiece.getType() == TypeOfPiece.K && Math.abs(endFile - startFile) == 2) {
+        // Check if castling is allowed
+        if (!canCastle(startRank, startFile, endRank, endFile)) {
+            System.out.println("Castling is not allowed.");
+            return;
+        }
+
+        // Move the rook
+        int rookFile = (endFile > startFile) ? 8 : 1; // Rook's starting file (h for kingside, a for queenside)
+        int newRookFile = (endFile > startFile) ? endFile - 1 : endFile + 1; // Rook's new file (f for kingside, d for queenside)
+
+        // Move the rook to its new position
+        grid[endRank - 1][newRookFile - 1].placePiece(grid[startRank - 1][rookFile - 1].getPiece());
+        // Remove the rook from its old position
+        grid[startRank - 1][rookFile - 1].takePiece();
+    }
         //Piece that was on square, just in case we need to walk back the move
         Piece takenPiece;
+
         //If statement for special case where taken piece isn't where the piece we are moving is landing during en passant
         if (isEnPassantHappening) {
             if(enPassantSquare == null) {
@@ -139,6 +163,11 @@ public class Board{
 
         grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
         grid[startRank - 1][startFile - 1].takePiece();
+
+    // ============================================
+    // CASTLING PAWN PROMOTION
+    // ============================================
+        promotePawn(grid[endRank - 1][endFile - 1]);
             
         //After making the move, if your king is in check then move is reversed
         if (isKingInCheck()) {
@@ -617,4 +646,82 @@ public class Board{
         }
         return false;
     }
+
+    //For Pawn Promotion
+    private void promotePawn(Square square) {
+    if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
+        return; // Not a pawn, then no promotion needed
+    }
+
+    Piece pawn = square.getPiece();
+    int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
+
+    if (square.rank == promotionRank) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
+        String input = scanner.nextLine().toUpperCase();
+
+        TypeOfPiece newType;
+        switch (input) {
+            case "Q":
+                newType = TypeOfPiece.Q;
+                break;
+            case "R":
+                newType = TypeOfPiece.R;
+                break;
+            case "B":
+                newType = TypeOfPiece.B;
+                break;
+            case "N":
+                newType = TypeOfPiece.N;
+                break;
+            default:
+                System.out.println("Invalid choice. Promoting to Queen by default.");
+                newType = TypeOfPiece.Q;
+                break;
+        }
+
+        // Replace the pawn with the new piece
+        square.placePiece(new Piece(pawn.getColor(), newType));
+    }
+}
+
+    // check castling condition
+    private boolean canCastle(int startRank, int startFile, int endRank, int endFile) {
+    Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
+    if (movingPiece == null || movingPiece.getType() != TypeOfPiece.K) {
+        return false; // Only the king can castle
+    }
+
+    int direction = endFile > startFile ? 1 : -1; // 1 for kingside, -1 for queenside
+    int rookFile = (direction == 1) ? 8 : 1; // Rook's starting file
+
+    // Check if the king and rook are in their starting positions
+    Square kingSquare = grid[startRank - 1][startFile - 1];
+    Square rookSquare = grid[startRank - 1][rookFile - 1];
+
+    if (kingSquare.getPiece() == null || rookSquare.getPiece() == null ||
+        kingSquare.getPiece().getType() != TypeOfPiece.K ||
+        rookSquare.getPiece().getType() != TypeOfPiece.R) {
+        return false; // King or rook not in starting position
+    }
+
+    // Check if the squares between the king and rook are empty
+    for (int file = startFile + direction; file != rookFile; file += direction) {
+        if (grid[startRank - 1][file - 1].getPiece() != null) {
+            return false;
+        }
+    }
+
+    // Check if the king is not in check and does not move through a square under attack
+    for (int file = startFile; file != endFile + direction; file += direction) {
+        if (isSquareUnderAttack(startRank, file, movingPiece.getColor())) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+    
 }
