@@ -17,9 +17,24 @@ public class Chess {
 		 *         the contents of the returned ReturnPlay instance.
 		 */
 		public static ReturnPlay play(String move) {
-			String[] test = move.split("\\s+");
+			String[] coords = move.split("\\s+");
 			
-			//chessboard.movePiece(2, 4, 4, 4);
+
+			// Convert file (letter) to a number (1 to 8)
+			int startFile = coords[0].charAt(0) - 'a' + 1;
+			int endFile = coords[1].charAt(0) - 'a' + 1;
+
+			// Convert rank (number) to an integer
+			int startRank = Character.getNumericValue(coords[0].charAt(1));
+			int endRank = Character.getNumericValue(coords[1].charAt(1));
+
+			// System.out.println("Testing input to coordinates");
+			// System.out.println("startRank: " + startRank);
+			// System.out.println("startFile: " + startFile);
+			// System.out.println("endRank: " + endRank);
+			// System.out.println("endFile: " + endFile);
+			
+			chessboard.movePiece(startRank, startFile, endRank, endFile);
 			ReturnPlay newReturnPlay = new ReturnPlay();
 			newReturnPlay.piecesOnBoard = chessboard.printPosition();
 			newReturnPlay.message = chessboard.getMessage();

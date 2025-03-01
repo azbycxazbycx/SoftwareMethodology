@@ -53,7 +53,7 @@ public class Board{
     public void setTempEnPassantSquare(Square square) {
         this.tempEnPassantSquare = square;
     }
-}
+
 
     private void initializeBoard() {
         this.grid[0] = new Square[] {
@@ -200,7 +200,7 @@ public class Board{
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 if (grid[rank][file].getPiece() != null) {
-                    System.out.println(grid[rank][file]);
+                    //System.out.println(grid[rank][file]);
                     boardArrayList.add(grid[rank][file].toReturnPiece());
                 }
             }
@@ -263,10 +263,20 @@ public class Board{
                 int direction = (piece.getColor() == PieceColor.WHITE) ? 1 : -1;
                 if (startSquare.file == endSquare.file) {
                     // Move forward
+                    if (endSquare.getPiece() != null) {
+                        System.out.println("Pawns cannot capture vertically");
+                        return false;
+                    }
                     if (rankDiff == (1 * direction)) {
                         return true;
                     } else if (rankDiff == (2*direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
                         // First move: can move two squares
+
+                        //Checks to see that there isn't another piece blocking the pawn inbetween moving 2 spaces
+                        if (grid[startSquare.rank-1+direction][startSquare.file-1].getPiece() != null) {
+                            System.out.println("There is a piece blocking the pawn from moving");
+                            return false;
+                        }
                         canEnPassant = true;
                         return true;
                     }
@@ -339,22 +349,30 @@ public class Board{
                 Piece pieceOnCurrSquare = grid[rank][file].getPiece();
                 if (pieceOnCurrSquare != null) {
                     if (pieceOnCurrSquare.getColor() == enemyColor) {
-                        System.out.println(grid[rank][file]);
-                        switch(pieceOnCurrSquare.getType()) {
+                        //System.out.println(grid[rank][file]);  
+                        switch(pieceOnCurrSquare.type) {
                             case P:
                                 if (pawnCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                break;
                             case N:
                                 if (knightCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                break;
                             case B:
                                 if (bishopCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                break;
                             case R:
                                 if (rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                break;
                             case Q:
                                 if (bishopCheck(rank, file, colorOfKing, enemyColor) || rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                break;
+                            case K:
+                                break;
                             default:
                                 System.out.println("Error: piece with no type");
                                 continue;
                         }
+                        
                     }
                 }
             }

@@ -75,4 +75,8 @@ public class Square {
         }
         return piece.toString() + " on square at rank " + rank + " file " + file;
     }
+
+    public boolean equals(Square otherSquare) {
+        return (this.file == otherSquare.file && this.rank == otherSquare.rank);
+    }
 }
