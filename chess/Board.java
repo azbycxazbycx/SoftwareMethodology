@@ -71,18 +71,21 @@ public class Board{
         };
     }
 
-    
+    public void moveInterpreter(String move) {
+
+    }
     
     
 
     //I'm not sure how we are going to figure out all the steps when we move a piece 
     //but here's a basic starting point
     public void movePiece(int startRank, int startFile, int endRank, int endFile) {
+        
         if (!isValidMove(startRank, startFile, endRank, endFile)) {
             System.out.println("Not a valid move");
             return;
         }
-        
+        System.out.println("AAAAA");
         //Piece that was on square, just in case we need to walk back the move
         Piece takenPiece = grid[endRank - 1][endFile - 1].getPiece();
 
@@ -124,6 +127,7 @@ public class Board{
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 if (grid[rank][file].getPiece() != null) {
+                    System.out.println(grid[rank][file]);
                     boardArrayList.add(grid[rank][file].toReturnPiece());
                 }
             }
@@ -144,7 +148,6 @@ public class Board{
         Square startSquare = this.grid[startRank-1][startFile-1];
         Square endSquare = this.grid[endRank-1][endFile-1];
         Piece movingPiece = startSquare.getPiece();
-
         if (movingPiece == null) {
             System.out.println("No piece to move");
             return false;
@@ -153,14 +156,21 @@ public class Board{
             System.out.println("Cannot move to starting square");
             return false;
         }
+
+        
         if ((movingPiece.getColor() == PieceColor.WHITE) != isWhiteTurn) {
             System.out.println("Cannot move opponent's piece");
             return false;
         }
-        if (endSquare.getPiece().getColor() == movingPiece.getColor()) {
-            System.out.println("Cannot move piece into another friendly piece");
-            return false;
-        }
+        
+        if (endSquare.getPiece() != null) {
+            if (endSquare.getPiece().getColor() == movingPiece.getColor()) {
+                System.out.println("Cannot move piece into another friendly piece");
+                return false;
+            }
+        }   
+
+        //Checks if this type of piece can actually move in that way
         if (!isValidPieceMove(startSquare, endSquare, movingPiece)) {
             return false;
         }

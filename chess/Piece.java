@@ -88,17 +88,17 @@ public class Piece{
     }
     switch(this.type) {
       case P:
-        return color + "pawn";
+        return color + " pawn";
       case N:
-        return color + "knight";
+        return color + " knight";
       case B:
-        return color + "bishop";
+        return color + " bishop";
       case R:
-        return color + "rook";
+        return color + " rook";
       case Q:
-        return color + "queen";
+        return color + " queen";
       case K:
-        return color + "king";
+        return color + " king";
       default:
         return "Nothing";
     }

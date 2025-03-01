@@ -17,12 +17,17 @@ public class Chess {
 		 *         the contents of the returned ReturnPlay instance.
 		 */
 		public static ReturnPlay play(String move) {
-	
+			String[] test = move.split("\\s+");
+			
+			//chessboard.movePiece(2, 4, 4, 4);
+			ReturnPlay newReturnPlay = new ReturnPlay();
+			newReturnPlay.piecesOnBoard = chessboard.printPosition();
+			newReturnPlay.message = chessboard.getMessage();
 			/* FILL IN THIS METHOD */
 			
 			/* FOLLOWING LINE IS A PLACEHOLDER TO MAKE COMPILER HAPPY */
 			/* WHEN YOU FILL IN THIS METHOD, YOU NEED TO RETURN A ReturnPlay OBJECT */
-			return null;
+			return newReturnPlay;
 		}
 		
 		
