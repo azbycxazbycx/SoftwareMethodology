@@ -139,6 +139,7 @@ public class Board{
         else {
             setEnPassantSquare(null);
         }
+        isEnPassant = false;
     
         if (isWhiteTurn) {
             isWhiteTurn = false;
