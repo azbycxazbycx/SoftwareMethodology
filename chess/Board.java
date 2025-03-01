@@ -12,6 +12,9 @@ public class Board{
     Piece canEnPassant = null;
     Message currMessage = null;
 
+    // for tracking last move
+    private String lastMove;
+    
     // Constructor
     public Board(){
         this.grid = new Square[8][8];
