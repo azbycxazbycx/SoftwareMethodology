@@ -723,5 +723,19 @@ public class Board{
     return true;
 }
 
+    private boolean isSquareUnderAttack(int rank, int file, PieceColor color) {
+    // Check if the square is under attack by any enemy piece
+    for (int r = 0; r < 8; r++) {
+        for (int f = 0; f < 8; f++) {
+            Piece piece = grid[r][f].getPiece();
+            if (piece != null && piece.getColor() != color) {
+                if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
     
 }
