@@ -9,7 +9,8 @@ public class Board{
     Square[][] grid;
     boolean isWhiteTurn;
     int turnNum;
-    boolean isEnPassant = false;
+    boolean canEnPassant = false;
+    boolean isEnPassantHappening = false;
     Message currMessage = null;
     Square enPassantSquare = null; // Current en passant square
     Square tempEnPassantSquare = null; // Temporary en passant square for validation
@@ -121,7 +122,20 @@ public class Board{
         }
         System.out.println("AAAAA");
         //Piece that was on square, just in case we need to walk back the move
-        Piece takenPiece = grid[endRank - 1][endFile - 1].getPiece();
+        Piece takenPiece;
+        //If statement for special case where taken piece isn't where the piece we are moving is landing during en passant
+        if (isEnPassantHappening) {
+            if(enPassantSquare == null) {
+                System.out.println("Something wrong happened with the en passant system, please bugfix");
+                return;
+            }
+            takenPiece = enPassantSquare.getPiece();
+            enPassantSquare.takePiece();
+        }
+        else {
+            takenPiece = grid[endRank - 1][endFile - 1].getPiece();
+        }
+        
 
         grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
         grid[startRank - 1][startFile - 1].takePiece();
@@ -130,16 +144,29 @@ public class Board{
         if (isKingInCheck()) {
             System.out.println("King is in check, not a valid move");
             grid[startRank-1][startFile-1].placePiece(grid[endRank - 1][endFile - 1].getPiece());
-            grid[endRank-1][endFile-1].placePiece(takenPiece);
+            if (isEnPassantHappening) {
+                if (enPassantSquare == null) {
+                    System.out.println("Something else went wrong # 2 with en passant system, please bugfix");
+                    return;
+                }
+                enPassantSquare.placePiece(takenPiece);
+            }
+            else {
+                grid[endRank-1][endFile-1].placePiece(takenPiece);
+            }
+            
             return;
         }
-        if (isEnPassant) {
+        if (canEnPassant) {
+            
             enPassantSquare = grid[endRank-1][endFile-1];
         }
         else {
             setEnPassantSquare(null);
+            canEnPassant = false;
         }
-        isEnPassant = false;
+        
+        isEnPassantHappening = false;
     
         if (isWhiteTurn) {
             isWhiteTurn = false;
@@ -240,11 +267,15 @@ public class Board{
                         return true;
                     } else if (rankDiff == (2*direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
                         // First move: can move two squares
-                        isEnPassant = true;
+                        canEnPassant = true;
                         return true;
                     }
                 } else if (fileDiff == 1 && rankDiff == (1*direction)) {
                     // Capture diagonally
+                    if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
+                        isEnPassantHappening = true;
+                        return true;
+                    }
                     return endSquare.getPiece() != null;
                 }
                 return false;
