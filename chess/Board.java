@@ -9,10 +9,10 @@ public class Board{
     Square[][] grid;
     boolean isWhiteTurn;
     int turnNum;
-    Piece canEnPassant = null;
+    boolean isEnPassant = false;
     Message currMessage = null;
-    Square enPassantSquare; // Current en passant square
-    Square tempEnPassantSquare; // Temporary en passant square for validation
+    Square enPassantSquare = null; // Current en passant square
+    Square tempEnPassantSquare = null; // Temporary en passant square for validation
 
 
     // for tracking last move
@@ -133,6 +133,12 @@ public class Board{
             grid[endRank-1][endFile-1].placePiece(takenPiece);
             return;
         }
+        if (isEnPassant) {
+            enPassantSquare = grid[endRank-1][endFile-1];
+        }
+        else {
+            setEnPassantSquare(null);
+        }
     
         if (isWhiteTurn) {
             isWhiteTurn = false;
@@ -233,6 +239,7 @@ public class Board{
                         return true;
                     } else if (rankDiff == (2*direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
                         // First move: can move two squares
+                        isEnPassant = true;
                         return true;
                     }
                 } else if (fileDiff == 1 && rankDiff == (1*direction)) {
