@@ -4,8 +4,9 @@ import chess.Piece.PieceColor;
 import chess.Piece.TypeOfPiece;
 import chess.ReturnPlay.Message;
 import java.util.ArrayList;
+import java.util.Scanner;
 
-public class Board{
+public class Board {
     Square[][] grid;
     boolean isWhiteTurn;
     int turnNum;
@@ -15,10 +16,9 @@ public class Board{
     Square enPassantSquare = null; // Current en passant square
     Square tempEnPassantSquare = null; // Temporary en passant square for validation
 
-
     // for tracking last move
     private String lastMove;
-    
+
     // Constructor
     public Board() {
         this.grid = new Square[8][8];
@@ -29,8 +29,8 @@ public class Board{
         initializeBoard();
     }
 
-    /* en passant field part*/
-    
+    /* en passant field part */
+
     // Reset the en passant square at the start of each turn
     public void resetEnPassantSquare() {
         this.enPassantSquare = null;
@@ -54,8 +54,8 @@ public class Board{
         this.tempEnPassantSquare = square;
     }
 
-
     private void initializeBoard() {
+        // Initialize the board with pieces in their starting positions
         this.grid[0] = new Square[] {
             new Square(1, 1, new Piece(PieceColor.WHITE, TypeOfPiece.R)),
             new Square(1, 2, new Piece(PieceColor.WHITE, TypeOfPiece.N)),
@@ -77,13 +77,13 @@ public class Board{
             new Square(2, 7, new Piece(PieceColor.WHITE, TypeOfPiece.P)),
             new Square(2, 8, new Piece(PieceColor.WHITE, TypeOfPiece.P)),
         };
-    
+
         for (int i = 2; i < 6; i++) {
             for (int j = 0; j < 8; j++) {
-                this.grid[i][j] = new Square(i+1, j+1);
+                this.grid[i][j] = new Square(i + 1, j + 1);
             }
         }
-    
+
         this.grid[6] = new Square[] {
             new Square(7, 1, new Piece(PieceColor.BLACK, TypeOfPiece.P)),
             new Square(7, 2, new Piece(PieceColor.BLACK, TypeOfPiece.P)),
@@ -94,6 +94,7 @@ public class Board{
             new Square(7, 7, new Piece(PieceColor.BLACK, TypeOfPiece.P)),
             new Square(7, 8, new Piece(PieceColor.BLACK, TypeOfPiece.P))
         };
+
         this.grid[7] = new Square[] {
             new Square(8, 1, new Piece(PieceColor.BLACK, TypeOfPiece.R)),
             new Square(8, 2, new Piece(PieceColor.BLACK, TypeOfPiece.N)),
@@ -107,129 +108,111 @@ public class Board{
     }
 
     public void moveInterpreter(String move) {
-
+        // Implement move interpreter logic here
     }
-    
-    
 
-    //I'm not sure how we are going to figure out all the steps when we move a piece 
-    //but here's a basic starting point
     public void movePiece(int startRank, int startFile, int endRank, int endFile) {
-        
         if (!isValidMove(startRank, startFile, endRank, endFile)) {
             System.out.println("Not a valid move");
             return;
         }
-        System.out.println("AAAAA");
 
-    // ============================================
-    // CASTLING CHECK
-    // ============================================
-    Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
+        Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
 
-    // Check if the move is a castling move (king moves two squares horizontally)
-    if (movingPiece != null && movingPiece.getType() == TypeOfPiece.K && Math.abs(endFile - startFile) == 2) {
-        // Check if castling is allowed
-        if (!canCastle(startRank, startFile, endRank, endFile)) {
-            System.out.println("Castling is not allowed.");
-            return;
+        // ============================================
+        // CASTLING LOGIC
+        // ============================================
+        if (movingPiece != null && movingPiece.getType() == TypeOfPiece.K && Math.abs(endFile - startFile) == 2) {
+            // Move the rook
+            int rookFile = (endFile > startFile) ? 8 : 1; // Rook's starting file (h for kingside, a for queenside)
+            int newRookFile = (endFile > startFile) ? endFile - 1 : endFile + 1; // Rook's new file (f for kingside, d for queenside)
+
+            // Move the rook to its new position
+            grid[endRank - 1][newRookFile - 1].placePiece(grid[startRank - 1][rookFile - 1].getPiece());
+            // Remove the rook from its old position
+            grid[startRank - 1][rookFile - 1].takePiece();
         }
 
-        // Move the rook
-        int rookFile = (endFile > startFile) ? 8 : 1; // Rook's starting file (h for kingside, a for queenside)
-        int newRookFile = (endFile > startFile) ? endFile - 1 : endFile + 1; // Rook's new file (f for kingside, d for queenside)
-
-        // Move the rook to its new position
-        grid[endRank - 1][newRookFile - 1].placePiece(grid[startRank - 1][rookFile - 1].getPiece());
-        // Remove the rook from its old position
-        grid[startRank - 1][rookFile - 1].takePiece();
-    }
-        //Piece that was on square, just in case we need to walk back the move
+        // Handle the case where a piece is taken (e.g., during en passant or regular capture)
         Piece takenPiece;
-
-        //If statement for special case where taken piece isn't where the piece we are moving is landing during en passant
         if (isEnPassantHappening) {
-            if(enPassantSquare == null) {
+            if (enPassantSquare == null) {
                 System.out.println("Something wrong happened with the en passant system, please bugfix");
                 return;
             }
             takenPiece = enPassantSquare.getPiece();
             enPassantSquare.takePiece();
-        }
-        else {
+        } else {
             takenPiece = grid[endRank - 1][endFile - 1].getPiece();
         }
-        
 
+        // Move the piece to the new square
         grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
+        // Remove the piece from the old square
         grid[startRank - 1][startFile - 1].takePiece();
 
-    // ============================================
-    // CASTLING PAWN PROMOTION
-    // ============================================
+        // Handle pawn promotion
         promotePawn(grid[endRank - 1][endFile - 1]);
-            
-        //After making the move, if your king is in check then move is reversed
+
+        // After making the move, if your king is in check then move is reversed
         if (isKingInCheck()) {
             System.out.println("King is in check, not a valid move");
-            grid[startRank-1][startFile-1].placePiece(grid[endRank - 1][endFile - 1].getPiece());
+            grid[startRank - 1][startFile - 1].placePiece(grid[endRank - 1][endFile - 1].getPiece());
             if (isEnPassantHappening) {
                 if (enPassantSquare == null) {
-                    System.out.println("Something else went wrong # 2 with en passant system, please bugfix");
+                    System.out.println("Something else went wrong #2 with en passant system, please bugfix");
                     return;
                 }
                 enPassantSquare.placePiece(takenPiece);
+            } else {
+                grid[endRank - 1][endFile - 1].placePiece(takenPiece);
             }
-            else {
-                grid[endRank-1][endFile-1].placePiece(takenPiece);
-            }
-            
             return;
         }
+
+        // Handle en passant
         if (canEnPassant) {
-            
-            enPassantSquare = grid[endRank-1][endFile-1];
-        }
-        else {
+            enPassantSquare = grid[endRank - 1][endFile - 1];
+        } else {
             setEnPassantSquare(null);
             canEnPassant = false;
         }
-        
+
+        // Reset en passant flag
         isEnPassantHappening = false;
-    
+
+        // Switch turns
         if (isWhiteTurn) {
             isWhiteTurn = false;
-        }
-        else {
+        } else {
             isWhiteTurn = true;
             turnNum++;
         }
 
         // Update the last move
-        this.lastMove = String.format("%c%d %c%d", 
-        (char) ('a' + startFile - 1), startRank, 
-        (char) ('a' + endFile - 1), endRank);
-    } 
+        this.lastMove = String.format("%c%d %c%d",
+                (char) ('a' + startFile - 1), startRank,
+                (char) ('a' + endFile - 1), endRank);
+    }
 
-    //Will check if current position requires a message like "check"
+    // Check if the current position requires a message like "check"
     public Message checkMessage() {
         return null;
     }
 
-    //Not sure if we need this but it'll basically just reset everything to the start position
+    // Reset the board to the starting position
     public void resetBoard() {
         this.isWhiteTurn = true;
         this.turnNum = 1;
         initializeBoard();
     }
 
-    //It seems like they ultimately want us to return an arraylist from the returnplay class, so this'll convert the board
+    // Convert the board to an ArrayList of ReturnPiece objects
     public ArrayList<ReturnPiece> printPosition() {
         ArrayList<ReturnPiece> boardArrayList = new ArrayList<>();
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 if (grid[rank][file].getPiece() != null) {
-                    //System.out.println(grid[rank][file]);
                     boardArrayList.add(grid[rank][file].toReturnPiece());
                 }
             }
@@ -241,14 +224,13 @@ public class Board{
         return this.currMessage;
     }
 
-  
     public boolean isValidMove(int startRank, int startFile, int endRank, int endFile) {
         if (startRank < 1 || startRank > 8 || endRank < 1 || endRank > 8) {
             System.out.println("Error: Move not in range of board");
             return false;
         }
-        Square startSquare = this.grid[startRank-1][startFile-1];
-        Square endSquare = this.grid[endRank-1][endFile-1];
+        Square startSquare = this.grid[startRank - 1][startFile - 1];
+        Square endSquare = this.grid[endRank - 1][endFile - 1];
         Piece movingPiece = startSquare.getPiece();
         if (movingPiece == null) {
             System.out.println("No piece to move");
@@ -259,27 +241,33 @@ public class Board{
             return false;
         }
 
-        
+        // Check if the move is a castling move
+        if (movingPiece.getType() == TypeOfPiece.K && Math.abs(endFile - startFile) == 2) {
+            return canCastle(startRank, startFile, endRank, endFile);
+        }
+
+        // Rest of the validation logic...
         if ((movingPiece.getColor() == PieceColor.WHITE) != isWhiteTurn) {
             System.out.println("Cannot move opponent's piece");
             return false;
         }
-        
+
         if (endSquare.getPiece() != null) {
             if (endSquare.getPiece().getColor() == movingPiece.getColor()) {
                 System.out.println("Cannot move piece into another friendly piece");
                 return false;
             }
-        }   
+        }
 
-        //Checks if this type of piece can actually move in that way
+        // Check if this type of piece can actually move in that way
         if (!isValidPieceMove(startSquare, endSquare, movingPiece)) {
             return false;
         }
-        
+
         if (isPathObstructed(startSquare, endSquare, movingPiece)) {
             return false;
         }
+
         return true;
     }
 
@@ -298,20 +286,18 @@ public class Board{
                     }
                     if (rankDiff == (1 * direction)) {
                         return true;
-                    } else if (rankDiff == (2*direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
+                    } else if (rankDiff == (2 * direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
                         // First move: can move two squares
-
-                        //Checks to see that there isn't another piece blocking the pawn inbetween moving 2 spaces
-                        if (grid[startSquare.rank-1+direction][startSquare.file-1].getPiece() != null) {
+                        if (grid[startSquare.rank - 1 + direction][startSquare.file - 1].getPiece() != null) {
                             System.out.println("There is a piece blocking the pawn from moving");
                             return false;
                         }
                         canEnPassant = true;
                         return true;
                     }
-                } else if (fileDiff == 1 && rankDiff == (1*direction)) {
+                } else if (fileDiff == 1 && rankDiff == (1 * direction)) {
                     // Capture diagonally
-                    if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
+                    if (endSquare.equals(grid[enPassantSquare.rank - 1 + direction][enPassantSquare.file - 1])) {
                         isEnPassantHappening = true;
                         return true;
                     }
@@ -332,7 +318,8 @@ public class Board{
                 return (rankDiff == 0 || fileDiff == 0 || Math.abs(rankDiff) == fileDiff);
 
             case K: // King
-                return (Math.abs(rankDiff) <= 1 && fileDiff <= 1);
+                // Allow standard king moves (1 square) and castling moves (2 squares horizontally)
+                return (Math.abs(rankDiff) <= 1 && fileDiff <= 1) || (rankDiff == 0 && fileDiff == 2);
 
             default:
                 return false;
@@ -351,7 +338,7 @@ public class Board{
         int currentFile = startSquare.file + fileStep;
 
         while (currentRank != endSquare.rank || currentFile != endSquare.file) {
-            if (this.grid[currentRank-1][currentFile-1].getPiece() != null) {
+            if (this.grid[currentRank - 1][currentFile - 1].getPiece() != null) {
                 return true; // Path is obstructed
             }
             currentRank += rankStep;
@@ -361,154 +348,16 @@ public class Board{
         return false;
     }
 
-    //Called after moving piece, but before turn order is changed
+    // Check if the king is in check
     private boolean isKingInCheck() {
-        PieceColor colorOfKing;
-        PieceColor enemyColor;
-        if (isWhiteTurn) {
-            colorOfKing = PieceColor.WHITE;
-            enemyColor = PieceColor.BLACK;
-        }
-        else {
-            colorOfKing = PieceColor.BLACK;
-            enemyColor = PieceColor.WHITE;
-        }
+        PieceColor colorOfKing = isWhiteTurn ? PieceColor.WHITE : PieceColor.BLACK;
+        PieceColor enemyColor = isWhiteTurn ? PieceColor.BLACK : PieceColor.WHITE;
+
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 Piece pieceOnCurrSquare = grid[rank][file].getPiece();
-                if (pieceOnCurrSquare != null) {
-                    if (pieceOnCurrSquare.getColor() == enemyColor) {
-                        //System.out.println(grid[rank][file]);  
-                        switch(pieceOnCurrSquare.type) {
-                            case P:
-                                if (pawnCheck(rank, file, colorOfKing, enemyColor)) return true;
-                                break;
-                            case N:
-                                if (knightCheck(rank, file, colorOfKing, enemyColor)) return true;
-                                break;
-                            case B:
-                                if (bishopCheck(rank, file, colorOfKing, enemyColor)) return true;
-                                break;
-                            case R:
-                                if (rookCheck(rank, file, colorOfKing, enemyColor)) return true;
-                                break;
-                            case Q:
-                                if (bishopCheck(rank, file, colorOfKing, enemyColor) || rookCheck(rank, file, colorOfKing, enemyColor)) return true;
-                                break;
-                            case K:
-                                break;
-                            default:
-                                System.out.println("Error: piece with no type");
-                                continue;
-                        }
-                        
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean pawnCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
-        int direction = (enemyColor == PieceColor.WHITE) ? 1 : -1;
-        if (file - 1 >= 0) {
-            Piece targetPiece = grid[rank + direction][file-1].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[rank + direction][file-1]);
-                    return true;
-                }
-            }
-        }
-        if (file + 1 < 8) {
-            Piece targetPiece = grid[rank + direction][file+1].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[rank + direction][file-1]);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean knightCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
-        if (file - 2 >= 0) {
-            if (rank - 1 >= 0) {
-                Piece targetPiece = grid[rank-1][file-2].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank-1][file-2]);
-                        return true;
-                    }
-                }
-            }
-            if (rank + 1 < 8) {
-                Piece targetPiece = grid[rank+1][file-2].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank+1][file-2]);
-                        return true;
-                    }
-                }
-
-            }
-        }
-        if (file + 2 < 8) {
-            if (rank - 1 >= 0) {
-                Piece targetPiece = grid[rank-1][file+2].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank-1][file+2]);
-                        return true;
-                    }
-                }
-            }
-            if (rank + 1 < 8) {
-                Piece targetPiece = grid[rank+1][file+2].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank+1][file+2]);
-                        return true;
-                    }
-                }
-            }
-        }
-        if (rank - 2 >= 0) {
-            if (file - 1 >= 0) {
-                Piece targetPiece = grid[rank-2][file-1].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank-2][file-1]);
-                        return true;
-                    }
-                }
-            }
-            if (file + 1 < 8) {
-                Piece targetPiece = grid[rank-2][file+1].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank-2][file+1]);
-                        return true;
-                    }
-                }
-            }
-        }
-        if (rank + 2 < 8) {
-            if (file - 1 >= 0) {
-                Piece targetPiece = grid[rank+2][file-1].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank+2][file-1]);
-                        return true;
-                    }
-                }
-            }
-            if (file + 1 < 8) {
-                Piece targetPiece = grid[rank+2][file+1].getPiece();
-                if (targetPiece != null) {
-                    if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        System.out.println(grid[rank+2][file+1]);
+                if (pieceOnCurrSquare != null && pieceOnCurrSquare.getColor() == enemyColor) {
+                    if (isValidPieceMove(grid[rank][file], grid[getKingSquare(colorOfKing).rank - 1][getKingSquare(colorOfKing).file - 1], pieceOnCurrSquare)) {
                         return true;
                     }
                 }
@@ -517,225 +366,107 @@ public class Board{
         return false;
     }
 
-    private boolean bishopCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
-        int currRank = rank + 1;
-        int currFile = file + 1;
-        while (currRank < 8 && currFile < 8) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                break;
+    // Helper method to find the king's square
+    private Square getKingSquare(PieceColor color) {
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                Piece piece = grid[rank][file].getPiece();
+                if (piece != null && piece.getType() == TypeOfPiece.K && piece.getColor() == color) {
+                    return grid[rank][file];
                 }
             }
-            currRank++;
-            currFile++;
         }
-
-        currRank = rank + 1;
-        currFile = file - 1;
-        while (currRank < 8 && currFile >= 0) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currRank++;
-            currFile--;
-        }
-
-        currRank = rank - 1;
-        currFile = file + 1;
-        while (currRank >= 0 && currFile < 8) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currRank--;
-            currFile++;
-        }
-
-        currRank = rank - 1;
-        currFile = file - 1;
-        while (currRank >= 0 && currFile >= 0) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currRank--;
-            currFile--;
-        }
-        return false;
+        return null;
     }
 
-    private boolean rookCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
-        int currRank = rank + 1;
-        int currFile = file;
-        while (currRank < 8) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                break;
-                }
-            }
-            currRank++;
-        }
-
-        currRank = rank - 1;
-        currFile = file;
-        while (currRank >= 0) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currRank--;
-        }
-
-        currRank = rank;
-        currFile = file + 1;
-        while (currFile < 8) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currFile++;
-        }
-
-        currRank = rank;
-        currFile = file - 1;
-        while (currFile >= 0) {
-            Piece targetPiece = grid[currRank][currFile].getPiece();
-            if (targetPiece != null) {
-                if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    System.out.println(grid[currRank][currFile]);
-                    return true;
-                }else {
-                    break;
-                }
-            }
-            currFile--;
-        }
-        return false;
-    }
-
-    //For Pawn Promotion
-    private void promotePawn(Square square) {
-    if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
-        return; // Not a pawn, then no promotion needed
-    }
-
-    Piece pawn = square.getPiece();
-    int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
-
-    if (square.rank == promotionRank) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
-        String input = scanner.nextLine().toUpperCase();
-
-        TypeOfPiece newType;
-        switch (input) {
-            case "Q":
-                newType = TypeOfPiece.Q;
-                break;
-            case "R":
-                newType = TypeOfPiece.R;
-                break;
-            case "B":
-                newType = TypeOfPiece.B;
-                break;
-            case "N":
-                newType = TypeOfPiece.N;
-                break;
-            default:
-                System.out.println("Invalid choice. Promoting to Queen by default.");
-                newType = TypeOfPiece.Q;
-                break;
-        }
-
-        // Replace the pawn with the new piece
-        square.placePiece(new Piece(pawn.getColor(), newType));
-    }
-}
-
-    // check castling condition
+    // Check if castling is allowed
     private boolean canCastle(int startRank, int startFile, int endRank, int endFile) {
-    Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
-    if (movingPiece == null || movingPiece.getType() != TypeOfPiece.K) {
-        return false; // Only the king can castle
-    }
-
-    int direction = endFile > startFile ? 1 : -1; // 1 for kingside, -1 for queenside
-    int rookFile = (direction == 1) ? 8 : 1; // Rook's starting file
-
-    // Check if the king and rook are in their starting positions
-    Square kingSquare = grid[startRank - 1][startFile - 1];
-    Square rookSquare = grid[startRank - 1][rookFile - 1];
-
-    if (kingSquare.getPiece() == null || rookSquare.getPiece() == null ||
-        kingSquare.getPiece().getType() != TypeOfPiece.K ||
-        rookSquare.getPiece().getType() != TypeOfPiece.R) {
-        return false; // King or rook not in starting position
-    }
-
-    // Check if the squares between the king and rook are empty
-    for (int file = startFile + direction; file != rookFile; file += direction) {
-        if (grid[startRank - 1][file - 1].getPiece() != null) {
-            return false;
+        Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
+        if (movingPiece == null || movingPiece.getType() != TypeOfPiece.K) {
+            return false; // Only the king can castle
         }
-    }
 
-    // Check if the king is not in check and does not move through a square under attack
-    for (int file = startFile; file != endFile + direction; file += direction) {
-        if (isSquareUnderAttack(startRank, file, movingPiece.getColor())) {
-            return false;
+        int direction = endFile > startFile ? 1 : -1; // 1 for kingside, -1 for queenside
+        int rookFile = (direction == 1) ? 8 : 1; // Rook's starting file
+
+        // Check if the king and rook are in their starting positions
+        Square kingSquare = grid[startRank - 1][startFile - 1];
+        Square rookSquare = grid[startRank - 1][rookFile - 1];
+
+        if (kingSquare.getPiece() == null || rookSquare.getPiece() == null ||
+            kingSquare.getPiece().getType() != TypeOfPiece.K ||
+            rookSquare.getPiece().getType() != TypeOfPiece.R) {
+            return false; // King or rook not in starting position
         }
+
+        // Check if the squares between the king and rook are empty
+        for (int file = startFile + direction; file != rookFile; file += direction) {
+            if (grid[startRank - 1][file - 1].getPiece() != null) {
+                return false;
+            }
+        }
+
+        // Check if the king is not in check and does not move through a square under attack
+        for (int file = startFile; file != endFile + direction; file += direction) {
+            if (isSquareUnderAttack(startRank, file, movingPiece.getColor())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    return true;
-}
-
+    // Check if a square is under attack
     private boolean isSquareUnderAttack(int rank, int file, PieceColor color) {
-    // Check if the square is under attack by any enemy piece
-    for (int r = 0; r < 8; r++) {
-        for (int f = 0; f < 8; f++) {
-            Piece piece = grid[r][f].getPiece();
-            if (piece != null && piece.getColor() != color) {
-                if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece)) {
-                    return true;
+        for (int r = 0; r < 8; r++) {
+            for (int f = 0; f < 8; f++) {
+                Piece piece = grid[r][f].getPiece();
+                if (piece != null && piece.getColor() != color) {
+                    if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece)) {
+                        return true;
+                    }
                 }
             }
         }
+        return false;
     }
-    return false;
-}
-    
+
+    // Handle pawn promotion
+    private void promotePawn(Square square) {
+        if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
+            return; // Not a pawn, no promotion needed
+        }
+
+        Piece pawn = square.getPiece();
+        int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
+
+        if (square.rank == promotionRank) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
+            String input = scanner.nextLine().toUpperCase();
+
+            TypeOfPiece newType;
+            switch (input) {
+                case "Q":
+                    newType = TypeOfPiece.Q;
+                    break;
+                case "R":
+                    newType = TypeOfPiece.R;
+                    break;
+                case "B":
+                    newType = TypeOfPiece.B;
+                    break;
+                case "N":
+                    newType = TypeOfPiece.N;
+                    break;
+                default:
+                    System.out.println("Invalid choice. Promoting to Queen by default.");
+                    newType = TypeOfPiece.Q;
+                    break;
+            }
+
+            // Replace the pawn with the new piece
+            square.placePiece(new Piece(pawn.getColor(), newType));
+        }
+    }
 }
