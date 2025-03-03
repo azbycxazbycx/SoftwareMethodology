@@ -4,6 +4,7 @@ import chess.ReturnPiece.PieceFile;
 import chess.ReturnPiece.PieceType;
 
 public class Square {
+    //Rank and file are measured from 1 to 8
     int rank;
     int file;
     Piece piece;

@@ -30,6 +30,7 @@ public class Piece{
     return this.type;
   }
 
+  //Should only be used during pawn promotions
   public void setType(TypeOfPiece type) {
     this.type = type;
   }

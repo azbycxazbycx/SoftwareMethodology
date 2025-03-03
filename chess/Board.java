@@ -13,15 +13,15 @@ public class Board{
     boolean canEnPassant = false;
     boolean isEnPassantHappening = false;
     boolean isCastleMove = false;
+    boolean isPromotionMove = false;
     Message currMessage = null;
     Square enPassantSquare = null; // Current en passant square
     Square tempEnPassantSquare = null; // Temporary en passant square for validation
-    Square enemyKing = null; //Square where enemy king is, used to check for checkmate
+    Square targetKingSquare = null; //Square where enemy king is, used to check for checkmate
     TypeOfPiece promotionType = null; //If the pawn promotes, will promote to this
 
 
-    // for tracking last move
-    private String lastMove;
+    
     
     // Constructor
     public Board() {
@@ -119,6 +119,7 @@ public class Board{
         
         if (!isValidMove(startRank, startFile, endRank, endFile)) {
             System.out.println("Not a valid move");
+            setMessage(Message.ILLEGAL_MOVE);
             return;
         }
         //System.out.println("AAAAA");
@@ -166,9 +167,9 @@ public class Board{
             }
     
             //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
-            enemyKing = null;
+            targetKingSquare = null;
             if (isKingInCheck()) {
-                System.out.println(enemyKing);
+                System.out.println(targetKingSquare);
             }
             return;
         }
@@ -193,10 +194,7 @@ public class Board{
         grid[endRank - 1][endFile - 1].placePiece(movingPiece);
         grid[startRank - 1][startFile - 1].takePiece();
 
-    // ============================================
-    // CASTLING PAWN PROMOTION
-    // ============================================
-        promotePawn(grid[endRank - 1][endFile - 1]);
+    
             
         //After making the move, if your king is in check then move is reversed
         if (isKingInCheck()) {
@@ -212,7 +210,8 @@ public class Board{
             else {
                 grid[endRank-1][endFile-1].placePiece(takenPiece);
             }
-            
+            isPromotionMove = false;
+            promotionType = null;
             return;
         }
         if (canEnPassant) {
@@ -225,6 +224,13 @@ public class Board{
         }
         
         isEnPassantHappening = false;
+
+        if (isPromotionMove) {
+            if (promotionType == null) movingPiece.setType(TypeOfPiece.Q);
+            else movingPiece.setType(promotionType);
+        }
+        isPromotionMove = false;
+        promotionType = null;
 
         if (movingPiece == null) {
             System.out.println("For some reason the code has gotten to this point without error yet movingPiece is null");
@@ -241,17 +247,17 @@ public class Board{
             isWhiteTurn = true;
             turnNum++;
         }
-
-        //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
-        enemyKing = null;
-        if (isKingInCheck()) {
-            System.out.println(enemyKing);
+        if (getMessage() != Message.DRAW) {
+            setMessage(null);
         }
-
-        // Update the last move
-        this.lastMove = String.format("%c%d %c%d", 
-        (char) ('a' + startFile - 1), startRank, 
-        (char) ('a' + endFile - 1), endRank);
+        //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
+        targetKingSquare = null;
+        if (isKingInCheck()) {
+            setMessage(Message.CHECK);
+            System.out.println(targetKingSquare + " is in check");
+        }
+        
+        
     } 
 
     //Will check if current position requires a message like "check"
@@ -267,10 +273,11 @@ public class Board{
         canEnPassant = false;
         isEnPassantHappening = false;
         isCastleMove = false;
+        isPromotionMove = false;
         currMessage = null;
         enPassantSquare = null; // Current en passant square
         tempEnPassantSquare = null; // Temporary en passant square for validation
-        enemyKing = null; //Square where enemy king is, used to check for checkmate
+        targetKingSquare = null; //Square where enemy king is, used to check for checkmate
         initializeBoard();
     }
 
@@ -305,7 +312,6 @@ public class Board{
         }
     }
 
-  
     public boolean isValidMove(int startRank, int startFile, int endRank, int endFile) {
         if (startRank < 1 || startRank > 8 || endRank < 1 || endRank > 8) {
             System.out.println("Error: Move not in range of board");
@@ -377,6 +383,9 @@ public class Board{
                         return false;
                     }
                     if (rankDiff == (1 * direction)) {
+                        if (endSquare.rank == 1 || endSquare.rank == 8) {
+                            isPromotionMove = true;
+                        }
                         return true;
                     } else if (rankDiff == (2*direction) && (startSquare.rank == (direction == 1 ? 2 : 7))) {
                         // First move: can move two squares
@@ -499,8 +508,8 @@ public class Board{
             Piece targetPiece = grid[rank + direction][file-1].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[rank + direction][file-1];
-                    System.out.println(grid[rank + direction][file-1]);
+                    targetKingSquare = grid[rank + direction][file-1];
+                    //System.out.println(grid[rank + direction][file-1]);
                     return true;
                 }
             }
@@ -509,8 +518,8 @@ public class Board{
             Piece targetPiece = grid[rank + direction][file+1].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[rank + direction][file+1];
-                    System.out.println(grid[rank + direction][file-1]);
+                    targetKingSquare = grid[rank + direction][file+1];
+                    //System.out.println(grid[rank + direction][file-1]);
                     return true;
                 }
             }
@@ -524,8 +533,8 @@ public class Board{
                 Piece targetPiece = grid[rank-1][file-2].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank-1][file-2];
-                        System.out.println(grid[rank-1][file-2]);
+                        targetKingSquare = grid[rank-1][file-2];
+                        //System.out.println(grid[rank-1][file-2]);
                         return true;
                     }
                 }
@@ -534,8 +543,8 @@ public class Board{
                 Piece targetPiece = grid[rank+1][file-2].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank+1][file-2];
-                        System.out.println(grid[rank+1][file-2]);
+                        targetKingSquare = grid[rank+1][file-2];
+                        //System.out.println(grid[rank+1][file-2]);
                         return true;
                     }
                 }
@@ -547,8 +556,8 @@ public class Board{
                 Piece targetPiece = grid[rank-1][file+2].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank-1][file+2];
-                        System.out.println(grid[rank-1][file+2]);
+                        targetKingSquare = grid[rank-1][file+2];
+                        //System.out.println(grid[rank-1][file+2]);
                         return true;
                     }
                 }
@@ -557,8 +566,8 @@ public class Board{
                 Piece targetPiece = grid[rank+1][file+2].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank+1][file+2];
-                        System.out.println(grid[rank+1][file+2]);
+                        targetKingSquare = grid[rank+1][file+2];
+                        //System.out.println(grid[rank+1][file+2]);
                         return true;
                     }
                 }
@@ -569,8 +578,8 @@ public class Board{
                 Piece targetPiece = grid[rank-2][file-1].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank-2][file-1];
-                        System.out.println(grid[rank-2][file-1]);
+                        targetKingSquare = grid[rank-2][file-1];
+                        //System.out.println(grid[rank-2][file-1]);
                         return true;
                     }
                 }
@@ -579,8 +588,8 @@ public class Board{
                 Piece targetPiece = grid[rank-2][file+1].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank-2][file+1];
-                        System.out.println(grid[rank-2][file+1]);
+                        targetKingSquare = grid[rank-2][file+1];
+                        //System.out.println(grid[rank-2][file+1]);
                         return true;
                     }
                 }
@@ -591,8 +600,8 @@ public class Board{
                 Piece targetPiece = grid[rank+2][file-1].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank+2][file-1];
-                        System.out.println(grid[rank+2][file-1]);
+                        targetKingSquare = grid[rank+2][file-1];
+                        //System.out.println(grid[rank+2][file-1]);
                         return true;
                     }
                 }
@@ -601,8 +610,8 @@ public class Board{
                 Piece targetPiece = grid[rank+2][file+1].getPiece();
                 if (targetPiece != null) {
                     if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                        enemyKing = grid[rank+2][file+1];
-                        System.out.println(grid[rank+2][file+1]);
+                        targetKingSquare = grid[rank+2][file+1];
+                        //System.out.println(grid[rank+2][file+1]);
                         return true;
                     }
                 }
@@ -618,8 +627,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                 break;
@@ -635,8 +644,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -652,8 +661,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -669,8 +678,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -689,8 +698,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                 break;
@@ -705,8 +714,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -721,8 +730,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -737,8 +746,8 @@ public class Board{
             Piece targetPiece = grid[currRank][currFile].getPiece();
             if (targetPiece != null) {
                 if (targetPiece.getColor() == colorOfKing && targetPiece.getType() == TypeOfPiece.K) {
-                    enemyKing = grid[currRank][currFile];
-                    System.out.println(grid[currRank][currFile]);
+                    targetKingSquare = grid[currRank][currFile];
+                    //System.out.println(grid[currRank][currFile]);
                     return true;
                 }else {
                     break;
@@ -749,6 +758,7 @@ public class Board{
         return false;
     }
 
+    /* 
     //For Pawn Promotion
     private void promotePawn(Square square) {
         if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
@@ -787,6 +797,45 @@ public class Board{
             // Replace the pawn with the new piece
             square.placePiece(new Piece(pawn.getColor(), newType));
         }
+    }
+    */
+    private boolean isKingInCheckmate() {
+        
+        if (targetKingSquare == null) return false;
+        
+        PieceColor colorOfKing;
+        PieceColor enemyColor;
+        if (isWhiteTurn) {
+            colorOfKing = PieceColor.WHITE;
+            enemyColor = PieceColor.BLACK;
+        }
+        else {
+            colorOfKing = PieceColor.BLACK;
+            enemyColor = PieceColor.WHITE;
+        }
+        if (targetKingSquare.getPiece().getType() != TypeOfPiece.K) return false;
+        if (targetKingSquare.getPiece().getColor() != colorOfKing) return false;
+
+        /* 
+        for (int rankDiff = -1; rankDiff <= 1; rankDiff++) {
+            int currRank = targetKingSquare.rank + rankDiff;
+            if (currRank <= 0 || currRank > 8) {
+                continue;
+            }
+            for (int fileDiff = -1; fileDiff <= 1; fileDiff++) {
+                int currFile = targetKingSquare.file + fileDiff;
+                if ((currFile <= 0 || currFile > 8) || (rankDiff == 0 || fileDiff == 0)) {
+                    continue;
+                }
+                if (grid[currRank-1][currFile-1].getPiece() != null) {
+                    if (grid[currRank-1][currFile-1].getPiece().getColor() == colorOfKing) {
+                        continue;
+                    }
+                }
+                if (!isSquareUnderAttack(currRank, currFile, colorOfKing)) continue;
+            }
+        }
+        */
     }
 
     // check castling condition
@@ -834,17 +883,25 @@ public class Board{
 
     private boolean isSquareUnderAttack(int rank, int file, PieceColor color) {
     // Check if the square is under attack by any enemy piece
-    for (int r = 0; r < 8; r++) {
-        for (int f = 0; f < 8; f++) {
-            Piece piece = grid[r][f].getPiece();
-            if (piece != null && piece.getColor() != color) {
-                if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece) && !isPathObstructed(grid[r][f], grid[rank-1][file-1],piece)) {
-                    return true;
+        for (int r = 0; r < 8; r++) {
+            for (int f = 0; f < 8; f++) {
+                Piece piece = grid[r][f].getPiece();
+                if (piece != null && piece.getColor() != color) {
+                    if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece) && !isPathObstructed(grid[r][f], grid[rank-1][file-1],piece)) {
+                        return true;
+                    }
                 }
             }
         }
+        return false;
     }
-    return false;
-}
+
+    public void setPromotionType(TypeOfPiece type) {
+        this.promotionType = type;
+    }
+
+    public TypeOfPiece getPromotionType() {
+        return this.promotionType;
+    }
     
 }

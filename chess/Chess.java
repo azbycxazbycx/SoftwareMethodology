@@ -32,16 +32,16 @@ public class Chess {
 					chessboard.setMessage(Message.DRAW);
 				}
 				else if (coords[2].equals("N")) {
-					chessboard.promotionType = TypeOfPiece.N;
+					chessboard.setPromotionType(TypeOfPiece.N);
 				}
 				else if (coords[2].equals("B")) {
-					chessboard.promotionType = TypeOfPiece.B;
+					chessboard.setPromotionType(TypeOfPiece.B);
 				}
 				else if (coords[2].equals("R")) {
-					chessboard.promotionType = TypeOfPiece.R;
+					chessboard.setPromotionType(TypeOfPiece.R);
 				}
 				else if (coords[2].equals("Q")) {
-					chessboard.promotionType = TypeOfPiece.Q;
+					chessboard.setPromotionType(TypeOfPiece.Q);
 				}
 				else {
 					skipMove = true;
@@ -67,6 +67,8 @@ public class Chess {
 			if (!skipMove) {
 				System.out.println("edffrfj");
 				if (coords[0].length() != 2 || coords[1].length() != 2) {
+					System.out.println("coords[0].length() = " + coords[0].length());
+					System.out.println("coords[1].length() = " + coords[1].length());
 					chessboard.setMessage(Message.ILLEGAL_MOVE);
 					newReturnPlay.piecesOnBoard = chessboard.printPosition();
 					newReturnPlay.message = chessboard.getMessage();
@@ -85,11 +87,16 @@ public class Chess {
 			// System.out.println("startFile: " + startFile);
 			// System.out.println("endRank: " + endRank);
 			// System.out.println("endFile: " + endFile);
-				if (startFile >= 0 && startFile < 8 && startRank >= 0 && startRank < 8 
-				&& endRank >= 0 && endRank < 8 && endFile >= 0 && endFile < 8) {
+				if (startFile > 0 && startFile <= 8 && startRank > 0 && startRank <= 8 
+				&& endRank > 0 && endRank <= 8 && endFile > 0 && endFile <= 8) {
 					chessboard.movePiece(startRank, startFile, endRank, endFile);
 				}
 				else {
+					System.out.println("startRank = " + startRank);
+					System.out.println("startFile = " + startFile);
+					System.out.println("endRank = " + endRank);
+					System.out.println("endFile = " + endFile);
+					System.out.println("{}OOO");
 					chessboard.setMessage(Message.ILLEGAL_MOVE);
 				}
 				
