@@ -129,10 +129,6 @@ public class Board{
     // ============================================
         Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
 
-        if (isCheckmate()) {
-        setMessage(isWhiteTurn ? Message.CHECKMATE_BLACK_WINS : Message.CHECKMATE_WHITE_WINS);
-    }
-
     /* 
     // Check if the move is a castling move (king moves two squares horizontally)
     if (movingPiece != null && movingPiece.getType() == TypeOfPiece.K && Math.abs(endFile - startFile) == 2) {
@@ -907,81 +903,5 @@ public class Board{
     public TypeOfPiece getPromotionType() {
         return this.promotionType;
     }
-
-    //** CHECK MATE PART ***//
-    //*** TESTING ***//
-
-    private boolean hasLegalKingMoves(int kingRank, int kingFile, PieceColor kingColor) {
-    // Check all 8 possible moves for the king
-    int[] rankMoves = {-1, -1, -1, 0, 0, 1, 1, 1};
-    int[] fileMoves = {-1, 0, 1, -1, 1, -1, 0, 1};
-
-    for (int i = 0; i < 8; i++) {
-        int newRank = kingRank + rankMoves[i];
-        int newFile = kingFile + fileMoves[i];
-
-        // Check if the move is within the board
-        if (newRank >= 1 && newRank <= 8 && newFile >= 1 && newFile <= 8) {
-            Square targetSquare = grid[newRank - 1][newFile - 1];
-
-            // Check if the target square is empty or occupied by an enemy piece
-            if (targetSquare.getPiece() == null || targetSquare.getPiece().getColor() != kingColor) {
-                // Simulate the move and check if the king is still in check
-                Piece originalPiece = targetSquare.getPiece();
-                targetSquare.placePiece(grid[kingRank - 1][kingFile - 1].getPiece());
-                grid[kingRank - 1][kingFile - 1].takePiece();
-
-                boolean stillInCheck = isKingInCheck();
-
-                // Undo the move
-                grid[kingRank - 1][kingFile - 1].placePiece(targetSquare.getPiece());
-                targetSquare.placePiece(originalPiece);
-
-                if (!stillInCheck) {
-                    return true; // King has at least one legal move
-                }
-            }
-        }
-    }
-    return false; // King has no legal moves
-}
-
-    private boolean canBlockOrCapture(int kingRank, int kingFile, PieceColor kingColor) {
-    // Iterate over all pieces of the same color as the king
-    for (int rank = 0; rank < 8; rank++) {
-        for (int file = 0; file < 8; file++) {
-            Piece piece = grid[rank][file].getPiece();
-            if (piece != null && piece.getColor() == kingColor) {
-                // Check if the piece can move to block or capture the attacker
-                if (canBlockOrCaptureWithPiece(rank + 1, file + 1, kingRank, kingFile, kingColor)) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false; // No piece can block or capture
-}
-
-    public boolean isCheckmate() {
-    PieceColor kingColor = isWhiteTurn ? PieceColor.WHITE : PieceColor.BLACK;
-    Square kingSquare = findKing(kingColor);
-
-    if (kingSquare == null || !isKingInCheck()) {
-        return false; // King is not in check
-    }
-
-    // Check if the king has any legal moves
-    if (hasLegalKingMoves(kingSquare.rank, kingSquare.file, kingColor)) {
-        return false; // King can escape check
-    }
-
-    // Check if any piece can block or capture the attacker
-    if (canBlockOrCapture(kingSquare.rank, kingSquare.file, kingColor)) {
-        return false; 
-    }
-
-    return true; 
-}
-
-
+    
 }
