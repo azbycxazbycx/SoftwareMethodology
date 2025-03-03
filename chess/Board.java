@@ -109,9 +109,6 @@ public class Board{
         };
     }
 
-    public void moveInterpreter(String move) {
-
-    }
     
     
 
@@ -158,6 +155,20 @@ public class Board{
             //Since canCastle already checks if the king is in check we can bypass isKingInCheck
             grid[endRank - 1][endFile - 1].placePiece(movingPiece);
             grid[startRank - 1][startFile - 1].takePiece();
+
+            if (isWhiteTurn) {
+                isWhiteTurn = false;
+            }
+            else {
+                isWhiteTurn = true;
+                turnNum++;
+            }
+    
+            //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
+            enemyKing = null;
+            if (isKingInCheck()) {
+                System.out.println(enemyKing);
+            }
             return;
         }
 
@@ -252,6 +263,13 @@ public class Board{
     public void resetBoard() {
         this.isWhiteTurn = true;
         this.turnNum = 1;
+        canEnPassant = false;
+        isEnPassantHappening = false;
+        isCastleMove = false;
+        currMessage = null;
+        enPassantSquare = null; // Current en passant square
+        tempEnPassantSquare = null; // Temporary en passant square for validation
+        enemyKing = null; //Square where enemy king is, used to check for checkmate
         initializeBoard();
     }
 
@@ -267,6 +285,10 @@ public class Board{
             }
         }
         return boardArrayList;
+    }
+
+    public void setMessage(Message message) {
+        this.currMessage = message;
     }
 
     public Message getMessage() {
