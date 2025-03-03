@@ -117,6 +117,11 @@ public class Board{
     //I'm not sure how we are going to figure out all the steps when we move a piece 
     //but here's a basic starting point
     public void movePiece(int startRank, int startFile, int endRank, int endFile) {
+        //Just to double check that message isn't already set to ILLEGAL_MOVE before anything happens
+        if (getMessage() == Message.ILLEGAL_MOVE) {
+            setMessage(null);
+        }
+        isCastleMove = false;
         
         if (!isValidMove(startRank, startFile, endRank, endFile)) {
             System.out.println("Not a valid move");
@@ -166,7 +171,6 @@ public class Board{
                 isWhiteTurn = true;
                 turnNum++;
             }
-    
             //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
             targetKingSquare = null;
             if (isKingInCheck()) {
@@ -191,7 +195,6 @@ public class Board{
             takenPiece = grid[endRank - 1][endFile - 1].getPiece();
         }
         
-
         grid[endRank - 1][endFile - 1].placePiece(movingPiece);
         grid[startRank - 1][startFile - 1].takePiece();
 
@@ -211,6 +214,7 @@ public class Board{
             else {
                 grid[endRank-1][endFile-1].placePiece(takenPiece);
             }
+            setMessage(Message.ILLEGAL_MOVE);
             isPromotionMove = false;
             promotionType = null;
             return;
@@ -218,6 +222,7 @@ public class Board{
         if (canEnPassant) {
             
             enPassantSquare = grid[endRank-1][endFile-1];
+            canEnPassant = false;
         }
         else {
             setEnPassantSquare(null);
@@ -227,8 +232,11 @@ public class Board{
         isEnPassantHappening = false;
 
         if (isPromotionMove) {
+            //System.out.println("Promotion happening");
+            System.out.println(movingPiece);
             if (promotionType == null) movingPiece.setType(TypeOfPiece.Q);
             else movingPiece.setType(promotionType);
+            //System.out.println("After promotion: " + movingPiece);
         }
         isPromotionMove = false;
         promotionType = null;
@@ -341,13 +349,7 @@ public class Board{
         Square endSquare = this.grid[endRank-1][endFile-1];
         Piece movingPiece = startSquare.getPiece();
 
-        /* 
-        System.out.println("__________");
-        System.out.println(startSquare);
-        System.out.println(endSquare);
-        System.out.println(movingPiece);
-        System.out.println("__________");
-        */
+        
         if (movingPiece == null) {
             System.out.println("No piece to move");
             return false;
@@ -384,18 +386,13 @@ public class Board{
     private boolean isValidPieceMove(Square startSquare, Square endSquare, Piece piece) {
         int rankDiff = endSquare.rank - startSquare.rank;
         int fileDiff = Math.abs(endSquare.file - startSquare.file);
-
-        /* 
-        System.out.println("$$$$$$$$$");
-        System.out.println(startSquare);
-        System.out.println(endSquare);
-        System.out.println(piece);
-        System.out.println("$$$$$$$$$");
-        */
         
         switch (piece.getType()) {
             case P: // Pawn
+                //System.out.println("Pawn moves");
                 int direction = (piece.getColor() == PieceColor.WHITE) ? 1 : -1;
+                //System.out.println("Direction is " + direction);
+                //System.out.println("endSquare = " + endSquare);
                 if (startSquare.file == endSquare.file) {
                     // Move forward
                     if (endSquare.getPiece() != null) {
@@ -412,19 +409,28 @@ public class Board{
 
                         //Checks to see that there isn't another piece blocking the pawn inbetween moving 2 spaces
                         if (grid[startSquare.rank-1+direction][startSquare.file-1].getPiece() != null) {
-                            System.out.println("There is a piece blocking the pawn from moving");
+                            //System.out.println("There is a piece blocking the pawn from moving");
                             return false;
                         }
                         canEnPassant = true;
                         return true;
                     }
                 } else if (fileDiff == 1 && rankDiff == (1*direction)) {
+                    //System.out.println("Trying to capture diagonally");
+                    //System.out.println("En passant square is " + enPassantSquare);
                     // Capture diagonally
-                    if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
-                        isEnPassantHappening = true;
+                    if (enPassantSquare != null) {
+                        if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
+                            isEnPassantHappening = true;
+                            return true;
+                        }
+                    }   
+                    if (endSquare.getPiece() != null && endSquare.getPiece().getColor() != startSquare.getPiece().getColor()) {
+                        if (endSquare.rank == 1 || endSquare.rank == 8) {
+                            isPromotionMove = true;
+                        }
                         return true;
                     }
-                    return endSquare.getPiece() != null;
                 }
                 return false;
 
@@ -443,6 +449,7 @@ public class Board{
             case K: // King
                 if (Math.abs(endSquare.file - startSquare.file) == 2 && Math.abs(endSquare.rank - startSquare.rank) == 0) {
                     isCastleMove = true;
+                    //System.out.println("It's an attempted castle");
                     return canCastle(startSquare.rank, startSquare.file, endSquare.rank, endSquare.file);
                 }
                 return (Math.abs(rankDiff) <= 1 && fileDiff <= 1);
@@ -539,6 +546,7 @@ public class Board{
 
     private boolean pawnCheck(int rank, int file, PieceColor colorOfKing, PieceColor enemyColor) {
         int direction = (enemyColor == PieceColor.WHITE) ? 1 : -1;
+        if (rank + direction < 0 || rank + direction >= 8) return false;
         if (file - 1 >= 0) {
             Piece targetPiece = grid[rank + direction][file-1].getPiece();
             if (targetPiece != null) {
@@ -793,47 +801,7 @@ public class Board{
         return false;
     }
 
-    /* 
-    //For Pawn Promotion
-    private void promotePawn(Square square) {
-        if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
-            return; // Not a pawn, then no promotion needed
-        }
-
-        Piece pawn = square.getPiece();
-        int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
-
-        if (square.rank == promotionRank) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
-            String input = scanner.nextLine().toUpperCase();
-
-            TypeOfPiece newType;
-            switch (input) {
-                case "Q":
-                    newType = TypeOfPiece.Q;
-                    break;
-                case "R":
-                    newType = TypeOfPiece.R;
-                    break;
-                case "B":
-                    newType = TypeOfPiece.B;
-                    break;
-                case "N":
-                    newType = TypeOfPiece.N;
-                    break;
-                default:
-                    System.out.println("Invalid choice. Promoting to Queen by default.");
-                    newType = TypeOfPiece.Q;
-                    break;
-            }
-            scanner.close();
-
-            // Replace the pawn with the new piece
-            square.placePiece(new Piece(pawn.getColor(), newType));
-        }
-    }
-    */
+    
     private boolean isKingInCheckmate() {
         
         if (targetKingSquare == null) return false;
@@ -849,15 +817,15 @@ public class Board{
         if (targetKingSquare.getPiece().getColor() != colorOfKing) return false;
 
         if (kingCanMove(colorOfKing)) {
-            System.out.println("King can move");
+            //System.out.println("King can move");
             return false;
         }
         if (canCaptureAttackingPiece(colorOfKing)) {
-            System.out.println("Can counterattack");
+            //System.out.println("Can counterattack");
             return false;
         }
         if (canBlockAttackingPiece(colorOfKing)) {
-            System.out.println("Can block");
+            //System.out.println("Can block");
             return false;
         }
         return true;
@@ -879,7 +847,10 @@ public class Board{
                         continue;
                     }
                 }
-                if (!isSquareUnderAttack(currRank, currFile, colorOfKing)) continue;
+                if (!isSquareUnderAttack(currRank, currFile, colorOfKing)) {
+                    //System.out.println(targetKingSquare + " can move to " + grid[currRank-1][currFile-1]);
+                    return true;
+                }
             }
         }
         return false;
@@ -929,7 +900,7 @@ public class Board{
                         //Now we put both pieces back, regardless of the outcome
                         attackingSquare.placePiece(attackingPiece);
                         grid[r][f].placePiece(counterAttacker);
-                        System.out.println(grid[r][f] + " can counterattack " + attackingSquare);
+                        //System.out.println(grid[r][f] + " can counterattack " + attackingSquare);
                         return true;
                     }
                 }
@@ -999,7 +970,7 @@ public class Board{
                         blockingSquare.takePiece();
                         grid[r][f].placePiece(blockingPiece);
 
-                        System.out.println(grid[r][f] + " can block at " + blockingSquare);
+                        //System.out.println(grid[r][f] + " can block at " + blockingSquare);
                         return true;
                     }
                 }
@@ -1010,7 +981,9 @@ public class Board{
 
     // check castling condition
     private boolean canCastle(int startRank, int startFile, int endRank, int endFile) {
-        Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
+        Square kingSquare = grid[startRank - 1][startFile - 1];
+        Piece movingPiece = kingSquare.getPiece();
+
         if (movingPiece == null || movingPiece.getType() != TypeOfPiece.K) {
             return false; // Only the king can castle
         }
@@ -1022,16 +995,18 @@ public class Board{
         int rookFile = (direction == 1) ? 8 : 1; // Rook's starting file
 
         // Check if the king and rook are in their starting positions
-        Square kingSquare = grid[startRank - 1][startFile - 1];
+        
         Square rookSquare = grid[startRank - 1][rookFile - 1];
-        if (rookSquare.getPiece().hasMoved) {
-            return false;
-        }
+        
 
         if (kingSquare.getPiece() == null || rookSquare.getPiece() == null ||
             kingSquare.getPiece().getType() != TypeOfPiece.K ||
             rookSquare.getPiece().getType() != TypeOfPiece.R) {
             return false; // King or rook not in starting position
+        }
+        //Rook has moved
+        if (rookSquare.getPiece().hasMoved) {
+            return false;
         }
 
         // Check if the squares between the king and rook are empty
@@ -1047,7 +1022,6 @@ public class Board{
                 return false;
             }
         }
-
         return true;
     }
 
