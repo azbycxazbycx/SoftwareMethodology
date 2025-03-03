@@ -9,6 +9,7 @@ public class Piece{
 
   PieceColor color; 
   TypeOfPiece type;
+  boolean hasMoved = false;
 
   // Constructor
   public Piece(PieceColor color, TypeOfPiece type){

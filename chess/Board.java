@@ -123,7 +123,7 @@ public class Board{
             System.out.println("Not a valid move");
             return;
         }
-        System.out.println("AAAAA");
+        //System.out.println("AAAAA");
 
     // ============================================
     // CASTLING CHECK
@@ -178,7 +178,7 @@ public class Board{
         }
         
 
-        grid[endRank - 1][endFile - 1].placePiece(grid[startRank - 1][startFile - 1].getPiece());
+        grid[endRank - 1][endFile - 1].placePiece(movingPiece);
         grid[startRank - 1][startFile - 1].takePiece();
 
     // ============================================
@@ -213,6 +213,14 @@ public class Board{
         }
         
         isEnPassantHappening = false;
+
+        if (movingPiece == null) {
+            System.out.println("For some reason the code has gotten to this point without error yet movingPiece is null");
+            return;
+        }
+        else {
+            movingPiece.hasMoved = true;
+        }
     
         if (isWhiteTurn) {
             isWhiteTurn = false;
@@ -221,6 +229,7 @@ public class Board{
             isWhiteTurn = true;
             turnNum++;
         }
+
         //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
         enemyKing = null;
         if (isKingInCheck()) {
@@ -273,6 +282,14 @@ public class Board{
         Square startSquare = this.grid[startRank-1][startFile-1];
         Square endSquare = this.grid[endRank-1][endFile-1];
         Piece movingPiece = startSquare.getPiece();
+
+        /* 
+        System.out.println("__________");
+        System.out.println(startSquare);
+        System.out.println(endSquare);
+        System.out.println(movingPiece);
+        System.out.println("__________");
+        */
         if (movingPiece == null) {
             System.out.println("No piece to move");
             return false;
@@ -310,6 +327,14 @@ public class Board{
         int rankDiff = endSquare.rank - startSquare.rank;
         int fileDiff = Math.abs(endSquare.file - startSquare.file);
 
+        /* 
+        System.out.println("$$$$$$$$$");
+        System.out.println(startSquare);
+        System.out.println(endSquare);
+        System.out.println(piece);
+        System.out.println("$$$$$$$$$");
+        */
+        
         switch (piece.getType()) {
             case P: // Pawn
                 int direction = (piece.getColor() == PieceColor.WHITE) ? 1 : -1;
@@ -694,48 +719,52 @@ public class Board{
 
     //For Pawn Promotion
     private void promotePawn(Square square) {
-    if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
-        return; // Not a pawn, then no promotion needed
-    }
-
-    Piece pawn = square.getPiece();
-    int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
-
-    if (square.rank == promotionRank) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
-        String input = scanner.nextLine().toUpperCase();
-
-        TypeOfPiece newType;
-        switch (input) {
-            case "Q":
-                newType = TypeOfPiece.Q;
-                break;
-            case "R":
-                newType = TypeOfPiece.R;
-                break;
-            case "B":
-                newType = TypeOfPiece.B;
-                break;
-            case "N":
-                newType = TypeOfPiece.N;
-                break;
-            default:
-                System.out.println("Invalid choice. Promoting to Queen by default.");
-                newType = TypeOfPiece.Q;
-                break;
+        if (square.getPiece() == null || square.getPiece().getType() != TypeOfPiece.P) {
+            return; // Not a pawn, then no promotion needed
         }
 
-        // Replace the pawn with the new piece
-        square.placePiece(new Piece(pawn.getColor(), newType));
+        Piece pawn = square.getPiece();
+        int promotionRank = (pawn.getColor() == PieceColor.WHITE) ? 8 : 1;
+
+        if (square.rank == promotionRank) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Pawn promotion! Choose a piece (Q, R, B, N):");
+            String input = scanner.nextLine().toUpperCase();
+
+            TypeOfPiece newType;
+            switch (input) {
+                case "Q":
+                    newType = TypeOfPiece.Q;
+                    break;
+                case "R":
+                    newType = TypeOfPiece.R;
+                    break;
+                case "B":
+                    newType = TypeOfPiece.B;
+                    break;
+                case "N":
+                    newType = TypeOfPiece.N;
+                    break;
+                default:
+                    System.out.println("Invalid choice. Promoting to Queen by default.");
+                    newType = TypeOfPiece.Q;
+                    break;
+            }
+            scanner.close();
+
+            // Replace the pawn with the new piece
+            square.placePiece(new Piece(pawn.getColor(), newType));
+        }
     }
-}
 
     // check castling condition
     private boolean canCastle(int startRank, int startFile, int endRank, int endFile) {
         Piece movingPiece = grid[startRank - 1][startFile - 1].getPiece();
         if (movingPiece == null || movingPiece.getType() != TypeOfPiece.K) {
             return false; // Only the king can castle
+        }
+        if (movingPiece.hasMoved) {
+            return false;
         }
 
         int direction = endFile > startFile ? 1 : -1; // 1 for kingside, -1 for queenside
@@ -744,6 +773,9 @@ public class Board{
         // Check if the king and rook are in their starting positions
         Square kingSquare = grid[startRank - 1][startFile - 1];
         Square rookSquare = grid[startRank - 1][rookFile - 1];
+        if (rookSquare.getPiece().hasMoved) {
+            return false;
+        }
 
         if (kingSquare.getPiece() == null || rookSquare.getPiece() == null ||
             kingSquare.getPiece().getType() != TypeOfPiece.K ||
@@ -774,7 +806,7 @@ public class Board{
         for (int f = 0; f < 8; f++) {
             Piece piece = grid[r][f].getPiece();
             if (piece != null && piece.getColor() != color) {
-                if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece)) {
+                if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece) && !isPathObstructed(grid[r][f], grid[rank-1][file-1],piece)) {
                     return true;
                 }
             }
