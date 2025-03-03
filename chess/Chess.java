@@ -2,6 +2,9 @@ package chess;
 
 import java.util.ArrayList;
 
+import chess.Piece.TypeOfPiece;
+import chess.ReturnPlay.Message;
+
 public class Chess {
 		private static Board chessboard;
 	
@@ -17,25 +20,82 @@ public class Chess {
 		 *         the contents of the returned ReturnPlay instance.
 		 */
 		public static ReturnPlay play(String move) {
-			String[] coords = move.split("\\s+");
-			
+			String[] coords = move.strip().split("\\s+");
+			ReturnPlay newReturnPlay = new ReturnPlay();
+			boolean skipMove = false;
+			if (coords.length > 3) {
+				chessboard.setMessage(Message.ILLEGAL_MOVE);
+				skipMove = true;
+			}
+			else if (coords.length == 3) {
+				if (coords[2].equals("draw?")) {
+					chessboard.setMessage(Message.DRAW);
+				}
+				else if (coords[2].equals("N")) {
+					chessboard.promotionType = TypeOfPiece.N;
+				}
+				else if (coords[2].equals("B")) {
+					chessboard.promotionType = TypeOfPiece.B;
+				}
+				else if (coords[2].equals("R")) {
+					chessboard.promotionType = TypeOfPiece.R;
+				}
+				else if (coords[2].equals("Q")) {
+					chessboard.promotionType = TypeOfPiece.Q;
+				}
+				else {
+					skipMove = true;
+					chessboard.setMessage(Message.ILLEGAL_MOVE);
+				}
 
-			// Convert file (letter) to a number (1 to 8)
-			int startFile = coords[0].charAt(0) - 'a' + 1;
-			int endFile = coords[1].charAt(0) - 'a' + 1;
+			}
+			else if (coords.length == 1) {
+				if (coords[0].equals("resign")) {
+					chessboard.resign();
+					skipMove = true;
+				}
+				else {
+					chessboard.setMessage(Message.ILLEGAL_MOVE);
+					skipMove = true;
+				}
+			}
+			else if (coords.length < 1) {
+				chessboard.setMessage(Message.ILLEGAL_MOVE);
+				skipMove = true;
+			}
+
+			if (!skipMove) {
+				System.out.println("edffrfj");
+				if (coords[0].length() != 2 || coords[1].length() != 2) {
+					chessboard.setMessage(Message.ILLEGAL_MOVE);
+					newReturnPlay.piecesOnBoard = chessboard.printPosition();
+					newReturnPlay.message = chessboard.getMessage();
+					return newReturnPlay;
+				}
+				// Convert file (letter) to a number (1 to 8)
+				int startFile = coords[0].charAt(0) - 'a' + 1;
+				int endFile = coords[1].charAt(0) - 'a' + 1;
 
 			// Convert rank (number) to an integer
-			int startRank = Character.getNumericValue(coords[0].charAt(1));
-			int endRank = Character.getNumericValue(coords[1].charAt(1));
+				int startRank = Character.getNumericValue(coords[0].charAt(1));
+				int endRank = Character.getNumericValue(coords[1].charAt(1));
 
 			// System.out.println("Testing input to coordinates");
 			// System.out.println("startRank: " + startRank);
 			// System.out.println("startFile: " + startFile);
 			// System.out.println("endRank: " + endRank);
 			// System.out.println("endFile: " + endFile);
+				if (startFile >= 0 && startFile < 8 && startRank >= 0 && startRank < 8 
+				&& endRank >= 0 && endRank < 8 && endFile >= 0 && endFile < 8) {
+					chessboard.movePiece(startRank, startFile, endRank, endFile);
+				}
+				else {
+					chessboard.setMessage(Message.ILLEGAL_MOVE);
+				}
+				
+			}
 			
-			chessboard.movePiece(startRank, startFile, endRank, endFile);
-			ReturnPlay newReturnPlay = new ReturnPlay();
+			
 			newReturnPlay.piecesOnBoard = chessboard.printPosition();
 			newReturnPlay.message = chessboard.getMessage();
 			/* FILL IN THIS METHOD */

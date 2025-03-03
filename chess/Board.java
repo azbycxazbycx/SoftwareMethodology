@@ -17,6 +17,7 @@ public class Board{
     Square enPassantSquare = null; // Current en passant square
     Square tempEnPassantSquare = null; // Temporary en passant square for validation
     Square enemyKing = null; //Square where enemy king is, used to check for checkmate
+    TypeOfPiece promotionType = null; //If the pawn promotes, will promote to this
 
 
     // for tracking last move
@@ -293,6 +294,15 @@ public class Board{
 
     public Message getMessage() {
         return this.currMessage;
+    }
+
+    public void resign() {
+        if (isWhiteTurn) {
+            setMessage(Message.RESIGN_WHITE_WINS);
+        }
+        else {
+            setMessage(Message.RESIGN_BLACK_WINS);
+        }
     }
 
   
