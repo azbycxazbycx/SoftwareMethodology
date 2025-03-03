@@ -341,7 +341,7 @@ public class Board{
                 if (startSquare.file == endSquare.file) {
                     // Move forward
                     if (endSquare.getPiece() != null) {
-                        System.out.println("Pawns cannot capture vertically");
+                        //System.out.println("Pawns cannot capture vertically");
                         return false;
                     }
                     if (rankDiff == (1 * direction)) {
