@@ -420,11 +420,20 @@ public class Board{
                     //System.out.println("En passant square is " + enPassantSquare);
                     // Capture diagonally
                     if (enPassantSquare != null) {
+                        int enPassantTargetRank = enPassantSquare.rank - 1 + direction;
+                        int enPassantTargetFile = enPassantSquare.file - 1;
+                        if (enPassantTargetRank < 0 || enPassantTargetRank >= 8 || 
+                        enPassantTargetFile < 0 || enPassantTargetFile >= 8) {
+                            System.out.println("enPassantSquare is out of bounds");
+                            return false;
+                        }
                         if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
                             isEnPassantHappening = true;
                             return true;
                         }
                     }   
+                    
+                    
                     if (endSquare.getPiece() != null && endSquare.getPiece().getColor() != startSquare.getPiece().getColor()) {
                         if (endSquare.rank == 1 || endSquare.rank == 8) {
                             isPromotionMove = true;
