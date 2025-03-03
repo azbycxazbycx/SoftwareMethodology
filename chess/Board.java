@@ -226,10 +226,25 @@ public class Board{
         
         isEnPassantHappening = false;
 
+        // for out-of-bounds check
+        if (endRank - 1 >= 0 && endRank - 1 < 8 && endFile - 1 >= 0 && endFile - 1 < 8) {
+            grid[endRank - 1][endFile - 1].placePiece(movingPiece);
+        } else {
+            System.out.println("Error: Promotion move is out of board bounds.");
+            return;
+        }
+        
         if (isPromotionMove) {
             if (promotionType == null) movingPiece.setType(TypeOfPiece.Q);
             else movingPiece.setType(promotionType);
         }
+        
+
+        if (isPromotionMove) {
+           if (promotionType == null) movingPiece.setType(TypeOfPiece.Q);
+           else movingPiece.setType(promotionType);
+        }
+        
         isPromotionMove = false;
         promotionType = null;
 
@@ -418,15 +433,23 @@ public class Board{
                         canEnPassant = true;
                         return true;
                     }
-                } else if (fileDiff == 1 && rankDiff == (1*direction)) {
-                    // Capture diagonally
-                    if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
-                        isEnPassantHappening = true;
-                        return true;
-                    }
-                    return endSquare.getPiece() != null;
-                }
-                return false;
+                } else 
+                    if (fileDiff == 1 && rankDiff == (1 * direction)) {
+                        // Capture diagonally
+                        if (enPassantSquare != null) {
+                            int enPassantTargetRank = enPassantSquare.rank - 1 + direction;
+                            int enPassantTargetFile = enPassantSquare.file - 1;
+                            if (enPassantTargetRank >= 0 && enPassantTargetRank < 8 && 
+                                enPassantTargetFile >= 0 && enPassantTargetFile < 8) {
+                                if (endSquare.equals(grid[enPassantTargetRank][enPassantTargetFile])) {
+                                    isEnPassantHappening = true;
+                                return true;
+                               }
+                             }
+                        }
+                        return endSquare.getPiece() != null;
+                      }
+                      return false;
 
             case R: // Rook
                 return (rankDiff == 0 || fileDiff == 0);
