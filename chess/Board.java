@@ -938,12 +938,12 @@ public class Board{
                 targetSquare.placePiece(originalPiece);
 
                 if (!stillInCheck) {
-                    return true; // King has at least one legal move
+                    return true; 
                 }
             }
         }
     }
-    return false; // King has no legal moves
+    return false; 
 }
 
     private boolean canBlockOrCapture(int kingRank, int kingFile, PieceColor kingColor) {
@@ -953,8 +953,8 @@ public class Board{
             Piece piece = grid[rank][file].getPiece();
             if (piece != null && piece.getColor() == kingColor) {
                 // Check if the piece can move to block or capture the attacker
-                if (canBlockOrCaptureWithPiece(rank + 1, file + 1, kingRank, kingFile, kingColor)) {
-                    return true;
+                //
+                //************* something here
                 }
             }
         }
@@ -964,7 +964,7 @@ public class Board{
 
     public boolean isCheckmate() {
     PieceColor kingColor = isWhiteTurn ? PieceColor.WHITE : PieceColor.BLACK;
-    Square kingSquare = findKing(kingColor);
+    Square kingSquare; // ******traverse and find the current king
 
     if (kingSquare == null || !isKingInCheck()) {
         return false; // King is not in check
