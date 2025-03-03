@@ -18,6 +18,7 @@ public class Board{
     Square enPassantSquare = null; // Current en passant square
     Square tempEnPassantSquare = null; // Temporary en passant square for validation
     Square targetKingSquare = null; //Square where enemy king is, used to check for checkmate
+    Square attackingSquare = null; //Square where piece that is checking the king is
     TypeOfPiece promotionType = null; //If the pawn promotes, will promote to this
 
 
@@ -254,11 +255,28 @@ public class Board{
         targetKingSquare = null;
         if (isKingInCheck()) {
             setMessage(Message.CHECK);
-            System.out.println(targetKingSquare + " is in check");
+            //System.out.println(targetKingSquare + " is in check");
+            if (attackingSquare == null) {
+                System.out.println("Error: attackingSquare is null when it shouldn't be");
+            }
+            else {
+                if (isKingInCheckmate()) {
+                    if (isWhiteTurn) setMessage(Message.CHECKMATE_BLACK_WINS);
+                    else setMessage(Message.CHECKMATE_WHITE_WINS);
+                }
+            }
         }
-        
+        resetVariables();
         
     } 
+    
+    private void resetVariables() {
+        isCastleMove = false;
+        isPromotionMove = false;
+        targetKingSquare = null; 
+        attackingSquare = null; 
+        promotionType = null; 
+    }
 
     //Will check if current position requires a message like "check"
     public Message checkMessage() {
@@ -278,6 +296,8 @@ public class Board{
         enPassantSquare = null; // Current en passant square
         tempEnPassantSquare = null; // Temporary en passant square for validation
         targetKingSquare = null; //Square where enemy king is, used to check for checkmate
+        attackingSquare = null; 
+        promotionType = null; 
         initializeBoard();
     }
 
@@ -474,19 +494,34 @@ public class Board{
                         //System.out.println(grid[rank][file]);  
                         switch(pieceOnCurrSquare.type) {
                             case P:
-                                if (pawnCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                if (pawnCheck(rank, file, colorOfKing, enemyColor)) {
+                                    attackingSquare = grid[rank][file];
+                                    return true;
+                                }
                                 break;
                             case N:
-                                if (knightCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                if (knightCheck(rank, file, colorOfKing, enemyColor)) {
+                                    attackingSquare = grid[rank][file];
+                                    return true;
+                                }
                                 break;
                             case B:
-                                if (bishopCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                if (bishopCheck(rank, file, colorOfKing, enemyColor)) {
+                                    attackingSquare = grid[rank][file];
+                                    return true;
+                                }
                                 break;
                             case R:
-                                if (rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                if (rookCheck(rank, file, colorOfKing, enemyColor)) {
+                                    attackingSquare = grid[rank][file];
+                                    return true;
+                                }
                                 break;
                             case Q:
-                                if (bishopCheck(rank, file, colorOfKing, enemyColor) || rookCheck(rank, file, colorOfKing, enemyColor)) return true;
+                                if (bishopCheck(rank, file, colorOfKing, enemyColor) || rookCheck(rank, file, colorOfKing, enemyColor)) {
+                                    attackingSquare = grid[rank][file];
+                                    return true;
+                                }
                                 break;
                             case K:
                                 break;
@@ -804,19 +839,31 @@ public class Board{
         if (targetKingSquare == null) return false;
         
         PieceColor colorOfKing;
-        PieceColor enemyColor;
         if (isWhiteTurn) {
             colorOfKing = PieceColor.WHITE;
-            enemyColor = PieceColor.BLACK;
         }
         else {
             colorOfKing = PieceColor.BLACK;
-            enemyColor = PieceColor.WHITE;
         }
         if (targetKingSquare.getPiece().getType() != TypeOfPiece.K) return false;
         if (targetKingSquare.getPiece().getColor() != colorOfKing) return false;
 
-        /* 
+        if (kingCanMove(colorOfKing)) {
+            System.out.println("King can move");
+            return false;
+        }
+        if (canCaptureAttackingPiece(colorOfKing)) {
+            System.out.println("Can counterattack");
+            return false;
+        }
+        if (canBlockAttackingPiece(colorOfKing)) {
+            System.out.println("Can block");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean kingCanMove(PieceColor colorOfKing) {
         for (int rankDiff = -1; rankDiff <= 1; rankDiff++) {
             int currRank = targetKingSquare.rank + rankDiff;
             if (currRank <= 0 || currRank > 8) {
@@ -835,7 +882,130 @@ public class Board{
                 if (!isSquareUnderAttack(currRank, currFile, colorOfKing)) continue;
             }
         }
-        */
+        return false;
+    }
+
+    
+    private boolean canCaptureAttackingPiece(PieceColor colorOfKing) {
+        if (attackingSquare == null) {
+            System.out.println("Why is attackingSquare null");
+            return false;
+        }
+        for (int r = 0; r < 8; r++) {
+            for (int f = 0; f < 8; f++) {
+                Piece counterAttacker = grid[r][f].getPiece();
+                if (counterAttacker != null && counterAttacker.getColor() == colorOfKing) {
+                    if (isValidPieceMove(grid[r][f], attackingSquare, counterAttacker) 
+                        && !isPathObstructed(grid[r][f], attackingSquare, counterAttacker)) {
+                        //Up to now very similar to the isSquareUnderAttack method, but need to check if able to attack square
+                        Piece attackingPiece = attackingSquare.getPiece();
+                        
+                        if (attackingPiece.getColor() == counterAttacker.getColor()) {
+                            System.out.println(attackingSquare);
+                            System.out.println(grid[r][f]);
+                            System.out.println("Error: why are these two pieces the same color");
+                            continue;
+                        }
+                        //Now we simulate a capture to see if it would still expose the king somehow to check
+                        attackingSquare.placePiece(counterAttacker);
+                        grid[r][f].takePiece();
+                        
+                        int attackRank = attackingSquare.rank;
+                        int attackFile = attackingSquare.file;
+                        int targetRank = targetKingSquare.rank;
+                        int targetFile = targetKingSquare.file;
+
+                        //Bug I realized - isKingInCheck changes values of attackingSquare and targetKingSquare, so gotta fix that
+                        if (isKingInCheck()) {
+                            attackingSquare = grid[attackRank-1][attackFile-1];
+                            targetKingSquare = grid[targetRank-1][targetFile-1];
+
+                            attackingSquare.placePiece(attackingPiece);
+                            grid[r][f].placePiece(counterAttacker);
+
+                            
+                            continue;
+                        }
+                        //Now we put both pieces back, regardless of the outcome
+                        attackingSquare.placePiece(attackingPiece);
+                        grid[r][f].placePiece(counterAttacker);
+                        System.out.println(grid[r][f] + " can counterattack " + attackingSquare);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean canBlockAttackingPiece(PieceColor colorOfKing) {
+        //You can't block a check from a pawn or knight
+        if (attackingSquare.getPiece().getType() == TypeOfPiece.P || 
+            attackingSquare.getPiece().getType() == TypeOfPiece.N) return false;
+
+        int rankDirection = 0;
+        int fileDirection = 0;
+        int squaresInbetween = Math.max(Math.abs(attackingSquare.rank - targetKingSquare.rank),
+            Math.abs(attackingSquare.file - targetKingSquare.file)) - 1;
+        if (squaresInbetween <= 0) return false;
+        //When the attacking piece is above the king
+        if ((attackingSquare.rank - targetKingSquare.rank) > 0) rankDirection = 1;
+        //When the attacking piece is below the king
+        else if ((attackingSquare.rank - targetKingSquare.rank) < 0) rankDirection = -1;
+
+        //When the attacking piece is to the right the king
+        if ((attackingSquare.file - targetKingSquare.file) > 0) fileDirection = 1;
+        //When the attacking piece is to the left the king
+        else if ((attackingSquare.file - targetKingSquare.file) < 0) fileDirection = -1;
+        for (int squareNum = 1; squareNum <= squaresInbetween; squareNum++) {
+            Square blockingSquare = grid[targetKingSquare.rank + (squareNum * rankDirection)-1]
+                                        [targetKingSquare.file + (squareNum * fileDirection)-1];
+            if (canBlockAttackingPieceHelper(blockingSquare, colorOfKing)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //Finds out if any piece from the king's color of pieces can block on this square
+    private boolean canBlockAttackingPieceHelper(Square blockingSquare, PieceColor colorOfKing) {
+        for (int r = 0; r < 8; r++) {
+            for (int f = 0; f < 8; f++) {
+                Piece blockingPiece = grid[r][f].getPiece();
+                if (blockingPiece != null && blockingPiece.getColor() == colorOfKing && 
+                    blockingPiece.getType() != TypeOfPiece.K) {
+                    if (isValidPieceMove(grid[r][f], blockingSquare, blockingPiece) 
+                        && !isPathObstructed(grid[r][f], blockingSquare, blockingPiece)) {
+                        
+                        //Now we simulate a move to see if it would still expose the king somehow to check
+                        blockingSquare.placePiece(blockingPiece);
+                        grid[r][f].takePiece();
+
+                        int attackRank = attackingSquare.rank;
+                        int attackFile = attackingSquare.file;
+                        int targetRank = targetKingSquare.rank;
+                        int targetFile = targetKingSquare.file;
+
+//Bug I realized - isKingInCheck changes values of attackingSquare and targetKingSquare, so gotta fix that
+                        if (isKingInCheck()) {
+                            attackingSquare = grid[attackRank-1][attackFile-1];
+                            targetKingSquare = grid[targetRank-1][targetFile-1];
+
+                            blockingSquare.takePiece();
+                            grid[r][f].placePiece(blockingPiece);
+                            continue;
+                        }
+                        //Now we put the piece back, regardless of the outcome
+                        blockingSquare.takePiece();
+                        grid[r][f].placePiece(blockingPiece);
+
+                        System.out.println(grid[r][f] + " can block at " + blockingSquare);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     // check castling condition
@@ -881,12 +1051,12 @@ public class Board{
         return true;
     }
 
-    private boolean isSquareUnderAttack(int rank, int file, PieceColor color) {
+    private boolean isSquareUnderAttack(int rank, int file, PieceColor colorOfDefender) {
     // Check if the square is under attack by any enemy piece
         for (int r = 0; r < 8; r++) {
             for (int f = 0; f < 8; f++) {
                 Piece piece = grid[r][f].getPiece();
-                if (piece != null && piece.getColor() != color) {
+                if (piece != null && piece.getColor() != colorOfDefender) {
                     if (isValidPieceMove(grid[r][f], grid[rank - 1][file - 1], piece) && !isPathObstructed(grid[r][f], grid[rank-1][file-1],piece)) {
                         return true;
                     }
@@ -895,6 +1065,8 @@ public class Board{
         }
         return false;
     }
+
+    
 
     public void setPromotionType(TypeOfPiece type) {
         this.promotionType = type;

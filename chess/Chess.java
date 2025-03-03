@@ -65,7 +65,7 @@ public class Chess {
 			}
 
 			if (!skipMove) {
-				System.out.println("edffrfj");
+				
 				if (coords[0].length() != 2 || coords[1].length() != 2) {
 					System.out.println("coords[0].length() = " + coords[0].length());
 					System.out.println("coords[1].length() = " + coords[1].length());
