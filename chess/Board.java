@@ -118,7 +118,7 @@ public class Board{
     //but here's a basic starting point
     public void movePiece(int startRank, int startFile, int endRank, int endFile) {
         //Just to double check that message isn't already set to ILLEGAL_MOVE before anything happens
-        if (getMessage() == Message.ILLEGAL_MOVE) {
+        if (getMessage() == Message.ILLEGAL_MOVE || getMessage() == Message.CHECK) {
             setMessage(null);
         }
         isCastleMove = false;
@@ -174,7 +174,20 @@ public class Board{
             //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
             targetKingSquare = null;
             if (isKingInCheck()) {
-                System.out.println(targetKingSquare);
+                if (getMessage() != Message.DRAW) {
+                    setMessage(Message.CHECK);
+                }
+                
+                //System.out.println(targetKingSquare + " is in check");
+                if (attackingSquare == null) {
+                    System.out.println("Error: attackingSquare is null when it shouldn't be");
+                }
+                else {
+                    if (isKingInCheckmate()) {
+                        if (isWhiteTurn) setMessage(Message.CHECKMATE_BLACK_WINS);
+                        else setMessage(Message.CHECKMATE_WHITE_WINS);
+                    }
+                }
             }
             return;
         }
@@ -262,7 +275,10 @@ public class Board{
         //Now that we've switched turn order, we can check if the enemy king is in check, and maybe also checkmate
         targetKingSquare = null;
         if (isKingInCheck()) {
-            setMessage(Message.CHECK);
+            if (getMessage() != Message.DRAW) {
+                setMessage(Message.CHECK);
+            }
+            
             //System.out.println(targetKingSquare + " is in check");
             if (attackingSquare == null) {
                 System.out.println("Error: attackingSquare is null when it shouldn't be");
@@ -284,12 +300,6 @@ public class Board{
         targetKingSquare = null; 
         attackingSquare = null; 
         promotionType = null; 
-    }
-
-    //Will check if current position requires a message like "check"
-    public Message checkMessage() {
-        //TODO
-        return null;
     }
 
     //Not sure if we need this but it'll basically just reset everything to the start position
@@ -338,6 +348,7 @@ public class Board{
         else {
             setMessage(Message.RESIGN_BLACK_WINS);
         }
+        resetBoard();
     }
 
     public boolean isValidMove(int startRank, int startFile, int endRank, int endFile) {
