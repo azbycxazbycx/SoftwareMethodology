@@ -4,7 +4,6 @@ import chess.Piece.PieceColor;
 import chess.Piece.TypeOfPiece;
 import chess.ReturnPlay.Message;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class Board{
     Square[][] grid;
@@ -124,7 +123,7 @@ public class Board{
         isCastleMove = false;
         
         if (!isValidMove(startRank, startFile, endRank, endFile)) {
-            System.out.println("Not a valid move");
+            //System.out.println("Not a valid move");
             setMessage(Message.ILLEGAL_MOVE);
             return;
         }
@@ -180,7 +179,7 @@ public class Board{
                 
                 //System.out.println(targetKingSquare + " is in check");
                 if (attackingSquare == null) {
-                    System.out.println("Error: attackingSquare is null when it shouldn't be");
+                    //System.out.println("Error: attackingSquare is null when it shouldn't be");
                 }
                 else {
                     if (isKingInCheckmate()) {
@@ -198,7 +197,7 @@ public class Board{
         //If statement for special case where taken piece isn't where the piece we are moving is landing during en passant
         if (isEnPassantHappening) {
             if(enPassantSquare == null) {
-                System.out.println("Something wrong happened with the en passant system, please bugfix");
+                //System.out.println("Something wrong happened with the en passant system, please bugfix");
                 return;
             }
             takenPiece = enPassantSquare.getPiece();
@@ -215,11 +214,11 @@ public class Board{
             
         //After making the move, if your king is in check then move is reversed
         if (isKingInCheck()) {
-            System.out.println("King is in check, not a valid move");
+            //System.out.println("King is in check, not a valid move");
             grid[startRank-1][startFile-1].placePiece(grid[endRank - 1][endFile - 1].getPiece());
             if (isEnPassantHappening) {
                 if (enPassantSquare == null) {
-                    System.out.println("Something else went wrong # 2 with en passant system, please bugfix");
+                    //System.out.println("Something else went wrong # 2 with en passant system, please bugfix");
                     return;
                 }
                 enPassantSquare.placePiece(takenPiece);
@@ -255,7 +254,7 @@ public class Board{
         promotionType = null;
 
         if (movingPiece == null) {
-            System.out.println("For some reason the code has gotten to this point without error yet movingPiece is null");
+            //System.out.println("For some reason the code has gotten to this point without error yet movingPiece is null");
             return;
         }
         else {
@@ -281,7 +280,7 @@ public class Board{
             
             //System.out.println(targetKingSquare + " is in check");
             if (attackingSquare == null) {
-                System.out.println("Error: attackingSquare is null when it shouldn't be");
+                //System.out.println("Error: attackingSquare is null when it shouldn't be");
             }
             else {
                 if (isKingInCheckmate()) {
@@ -353,7 +352,7 @@ public class Board{
 
     public boolean isValidMove(int startRank, int startFile, int endRank, int endFile) {
         if (startRank < 1 || startRank > 8 || endRank < 1 || endRank > 8) {
-            System.out.println("Error: Move not in range of board");
+            //System.out.println("Error: Move not in range of board");
             return false;
         }
         Square startSquare = this.grid[startRank-1][startFile-1];
@@ -362,23 +361,23 @@ public class Board{
 
         
         if (movingPiece == null) {
-            System.out.println("No piece to move");
+            //System.out.println("No piece to move");
             return false;
         }
         if (startRank == endRank && startFile == endFile) {
-            System.out.println("Cannot move to starting square");
+            //System.out.println("Cannot move to starting square");
             return false;
         }
 
         
         if ((movingPiece.getColor() == PieceColor.WHITE) != isWhiteTurn) {
-            System.out.println("Cannot move opponent's piece");
+            //System.out.println("Cannot move opponent's piece");
             return false;
         }
         
         if (endSquare.getPiece() != null) {
             if (endSquare.getPiece().getColor() == movingPiece.getColor()) {
-                System.out.println("Cannot move piece into another friendly piece");
+                //System.out.println("Cannot move piece into another friendly piece");
                 return false;
             }
         }   
@@ -435,7 +434,7 @@ public class Board{
                         int enPassantTargetFile = enPassantSquare.file - 1;
                         if (enPassantTargetRank < 0 || enPassantTargetRank >= 8 || 
                         enPassantTargetFile < 0 || enPassantTargetFile >= 8) {
-                            System.out.println("enPassantSquare is out of bounds");
+                            //System.out.println("enPassantSquare is out of bounds");
                             return false;
                         }
                         if (endSquare.equals(grid[enPassantSquare.rank-1 + direction][enPassantSquare.file-1])) {
@@ -553,7 +552,7 @@ public class Board{
                             case K:
                                 break;
                             default:
-                                System.out.println("Error: piece with no type");
+                                //System.out.println("Error: piece with no type");
                                 continue;
                         }
                         
@@ -879,7 +878,7 @@ public class Board{
     
     private boolean canCaptureAttackingPiece(PieceColor colorOfKing) {
         if (attackingSquare == null) {
-            System.out.println("Why is attackingSquare null");
+            //System.out.println("Why is attackingSquare null");
             return false;
         }
         for (int r = 0; r < 8; r++) {
@@ -892,9 +891,9 @@ public class Board{
                         Piece attackingPiece = attackingSquare.getPiece();
                         
                         if (attackingPiece.getColor() == counterAttacker.getColor()) {
-                            System.out.println(attackingSquare);
-                            System.out.println(grid[r][f]);
-                            System.out.println("Error: why are these two pieces the same color");
+                            // System.out.println(attackingSquare);
+                            // System.out.println(grid[r][f]);
+                            // System.out.println("Error: why are these two pieces the same color");
                             continue;
                         }
                         //Now we simulate a capture to see if it would still expose the king somehow to check
