@@ -342,12 +342,11 @@ public class Board{
 
     public void resign() {
         if (isWhiteTurn) {
-            setMessage(Message.RESIGN_WHITE_WINS);
-        }
-        else {
             setMessage(Message.RESIGN_BLACK_WINS);
         }
-        resetBoard();
+        else {
+            setMessage(Message.RESIGN_WHITE_WINS);
+        }
     }
 
     public boolean isValidMove(int startRank, int startFile, int endRank, int endFile) {

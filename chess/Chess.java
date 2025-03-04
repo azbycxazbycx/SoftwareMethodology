@@ -67,8 +67,6 @@ public class Chess {
 			if (!skipMove) {
 				
 				if (coords[0].length() != 2 || coords[1].length() != 2) {
-					System.out.println("coords[0].length() = " + coords[0].length());
-					System.out.println("coords[1].length() = " + coords[1].length());
 					chessboard.setMessage(Message.ILLEGAL_MOVE);
 					newReturnPlay.piecesOnBoard = chessboard.printPosition();
 					newReturnPlay.message = chessboard.getMessage();
@@ -92,11 +90,6 @@ public class Chess {
 					chessboard.movePiece(startRank, startFile, endRank, endFile);
 				}
 				else {
-					System.out.println("startRank = " + startRank);
-					System.out.println("startFile = " + startFile);
-					System.out.println("endRank = " + endRank);
-					System.out.println("endFile = " + endFile);
-					System.out.println("{}OOO");
 					chessboard.setMessage(Message.ILLEGAL_MOVE);
 				}
 				
@@ -119,7 +112,7 @@ public class Chess {
 		public static void start() {
 			/* FILL IN THIS METHOD */
 			chessboard = new Board();
-			System.out.println("Testing method - Should show up in terminal");
+			//System.out.println("Testing method - Should show up in terminal");
 			
 		}
 
